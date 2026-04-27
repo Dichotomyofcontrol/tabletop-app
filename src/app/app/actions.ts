@@ -215,7 +215,6 @@ export async function upsertCharacter(formData: FormData) {
   }
 
   revalidatePath(`/app/campaigns/${campaignId}`);
-  redirect(`/app/campaigns/${campaignId}?saved=character`);
 }
 
 // --------- profile ------------------------------------------------

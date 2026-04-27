@@ -23,21 +23,15 @@ export default async function InvitePage({ params, searchParams }: Props) {
   const roles = (camp.data()?.roles ?? {}) as Record<string, string>;
   if (roles[user.uid] !== 'owner') redirect(`/app/campaigns/${id}`);
 
-  // No orderBy → no composite index required. Sort in JS.
-  const invitesSnap = await db
-    .collection('invitations')
-    .where('campaignId', '==', id)
-    .get();
-  const invites = invitesSnap.docs
-    .map((d) => ({
-      token: d.id,
-      email: (d.data().email as string | null) ?? null,
-      role: d.data().role as 'editor' | 'viewer',
-      acceptedAt: (d.data().acceptedAt as string | null) ?? null,
-      expiresAt: (d.data().expiresAt as string | null) ?? null,
-      createdAt: (d.data().createdAt as string) ?? '',
-    }))
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const invitesSnap = await db.collection('invitations').where('campaignId', '==', id).get();
+  const invites = invitesSnap.docs.map((d) => ({
+    token: d.id,
+    email: (d.data().email as string | null) ?? null,
+    role: d.data().role as 'editor' | 'viewer',
+    acceptedAt: (d.data().acceptedAt as string | null) ?? null,
+    expiresAt: (d.data().expiresAt as string | null) ?? null,
+    createdAt: (d.data().createdAt as string) ?? '',
+  })).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   const h = await headers();
   const host = h.get('host') ?? 'localhost:3000';
@@ -46,44 +40,42 @@ export default async function InvitePage({ params, searchParams }: Props) {
 
   return (
     <div className="max-w-2xl">
-      <Link href={`/app/campaigns/${id}`}
-        className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50">
+      <Link href={`/app/campaigns/${id}`} className="text-sm text-zinc-500 hover:text-amber-200 transition">
         ← {camp.data()?.name ?? 'Campaign'}
       </Link>
-      <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50 mt-3 mb-6">
-        Invite players
-      </h1>
+      <h1 className="font-display text-4xl gold-text mt-4 mb-2">Summon a player</h1>
+      <p className="text-zinc-400 mb-8">Generate a one-time link, share it however you like.</p>
 
-      {sp.error && <p className="mb-4 text-sm text-red-600 dark:text-red-400">{sp.error}</p>}
+      {sp.error && (
+        <p className="mb-4 px-3 py-2 rounded-md bg-red-950/50 border border-red-900/50 text-sm text-red-300">
+          {sp.error}
+        </p>
+      )}
 
-      <form action={createInvite}
-        className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 space-y-3 mb-8">
+      <form action={createInvite} className="card-mystic rounded-xl p-6 space-y-4 mb-10">
         <input type="hidden" name="campaign_id" value={id} />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <label className="block">
-            <span className="text-xs text-zinc-500">Email (optional)</span>
+            <span className="text-xs uppercase tracking-widest text-amber-200/70">Email (optional)</span>
             <input type="email" name="email" placeholder="player@example.com"
-              className="mt-1 w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50" />
+              className="input-mystic mt-1.5 w-full px-3 py-2.5 rounded-md" />
           </label>
           <label className="block">
-            <span className="text-xs text-zinc-500">Role</span>
+            <span className="text-xs uppercase tracking-widest text-amber-200/70">Role</span>
             <select name="role" defaultValue="viewer"
-              className="mt-1 w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50">
-              <option value="viewer">Viewer (read-only)</option>
-              <option value="editor">Editor (can add sessions, etc.)</option>
+              className="input-mystic mt-1.5 w-full px-3 py-2.5 rounded-md">
+              <option value="viewer">Viewer · read-only</option>
+              <option value="editor">Editor · can schedule sessions</option>
             </select>
           </label>
         </div>
-        <button type="submit"
-          className="px-4 py-2 rounded-md bg-zinc-900 dark:bg-zinc-50 text-zinc-50 dark:text-zinc-900 text-sm font-medium">
+        <button type="submit" className="btn-gold px-5 py-2.5 rounded-md text-sm uppercase tracking-wide">
           Generate invite link
         </button>
-        <p className="text-xs text-zinc-500">
-          We don&apos;t send the email automatically yet — copy the link and share it however you like.
-        </p>
+        <p className="text-xs text-zinc-500">No emails sent automatically. Copy the link and share via Discord, text, raven, etc.</p>
       </form>
 
-      <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500 mb-3">Invite links</h2>
+      <span className="tag-rune mb-3 inline-block">Existing invites</span>
       {invites.length > 0 ? (
         <ul className="space-y-2">
           {invites.map((inv) => {
@@ -91,24 +83,27 @@ export default async function InvitePage({ params, searchParams }: Props) {
             const used = !!inv.acceptedAt;
             const expired = !!inv.expiresAt && new Date(inv.expiresAt) < new Date();
             return (
-              <li key={inv.token}
-                className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md p-3">
+              <li key={inv.token} className="card-mystic rounded-lg p-3">
                 <div className="flex justify-between items-baseline flex-wrap gap-2">
-                  <span className="text-xs text-zinc-500 capitalize">
+                  <span className="text-xs text-amber-200/70 uppercase tracking-wide">
                     {inv.role}{inv.email ? ` · ${inv.email}` : ''}
                   </span>
                   <span className="text-xs">
-                    {used ? <span className="text-green-600 dark:text-green-400">Accepted</span>
-                      : expired ? <span className="text-red-600 dark:text-red-400">Expired</span>
+                    {used ? <span className="text-emerald-400">✓ Accepted</span>
+                      : expired ? <span className="text-red-400">Expired</span>
                       : <span className="text-zinc-500">Pending</span>}
                   </span>
                 </div>
-                <code className="block mt-2 text-xs text-zinc-700 dark:text-zinc-300 break-all">{url}</code>
+                <code className="block mt-2 text-xs text-zinc-300 break-all font-mono bg-zinc-950/50 rounded px-2 py-1.5 border border-amber-500/10">
+                  {url}
+                </code>
               </li>
             );
           })}
         </ul>
-      ) : <p className="text-sm text-zinc-500">No invites yet.</p>}
+      ) : (
+        <p className="text-sm text-zinc-500">No invites yet.</p>
+      )}
     </div>
   );
 }
