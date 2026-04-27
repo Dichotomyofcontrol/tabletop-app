@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { getAdminDb } from '@/lib/firebase/admin';
 import { getCurrentUser } from '@/lib/firebase/server';
 import RsvpChip from './_components/rsvp-chip';
+import { LocalTime, LocalFullDate, LocalDow, LocalDay } from './_components/local-time';
 
 function fmtDow(iso: string) { return new Date(iso).toLocaleDateString('en-US', { weekday: 'short' }); }
 function fmtDay(iso: string) { return new Date(iso).getDate(); }
@@ -105,11 +106,11 @@ export default async function Dashboard() {
               <div className="mt-5 flex items-center gap-5 text-sm text-zinc-400">
                 <span className="flex items-center gap-2">
                   <svg viewBox="0 0 16 16" className="w-4 h-4 opacity-60" fill="currentColor"><path d="M5 1a1 1 0 0 1 1 1v1h4V2a1 1 0 1 1 2 0v1h1a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h1V2a1 1 0 0 1 1-1Zm-2 6v7h10V7H3Z"/></svg>
-                  {fmtFullDate(next.startsAt)}
+                  <LocalFullDate iso={next.startsAt} />
                 </span>
                 <span className="flex items-center gap-2">
                   <svg viewBox="0 0 16 16" className="w-4 h-4 opacity-60" fill="currentColor"><path d="M8 1a7 7 0 1 1 0 14A7 7 0 0 1 8 1Zm.75 3.5a.75.75 0 0 0-1.5 0v4c0 .2.08.39.22.53l2.5 2.5a.75.75 0 0 0 1.06-1.06L8.75 8.19V4.5Z"/></svg>
-                  {fmtTime(next.startsAt)}
+                  <LocalTime iso={next.startsAt} />
                 </span>
                 {next.venue && (
                   <span className="flex items-center gap-2">
@@ -184,15 +185,15 @@ export default async function Dashboard() {
             {upNext.map((s) => (
               <li key={s.id} className="flex items-center gap-4 py-3.5">
                 <div className="w-12 shrink-0 text-center">
-                  <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium">{fmtDow(s.startsAt)}</p>
-                  <p className="text-lg font-semibold text-zinc-200 leading-none mt-0.5">{fmtDay(s.startsAt)}</p>
+                  <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium"><LocalDow iso={s.startsAt} /></p>
+                  <p className="text-lg font-semibold text-zinc-200 leading-none mt-0.5"><LocalDay iso={s.startsAt} /></p>
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm text-zinc-100 truncate">
                     <span className="font-medium">{s.campaignName}</span>
                     {s.title && <span className="text-zinc-500"> · {s.title}</span>}
                   </p>
-                  <p className="text-xs text-zinc-500 mt-0.5">{fmtTime(s.startsAt)}{s.venue && ` · ${s.venue}`}</p>
+                  <p className="text-xs text-zinc-500 mt-0.5"><LocalTime iso={s.startsAt} />{s.venue && ` · ${s.venue}`}</p>
                 </div>
                 <span className="text-xs text-zinc-500 shrink-0">{s.rsvps.filter(r => r.status === 'yes').length} in</span>
                 <Link href={`/app/campaigns/${s.campaignId}`} className="text-xs text-zinc-500 hover:text-zinc-200 transition shrink-0">→</Link>

@@ -3,6 +3,7 @@ import { getAdminDb } from '@/lib/firebase/admin';
 import { getCurrentUser } from '@/lib/firebase/server';
 import AddSessionForm from '@/app/app/_components/add-session-form';
 import SessionRow from '@/app/app/_components/session-row';
+import { LocalShortDate } from '@/app/app/_components/local-time';
 
 type Props = { params: Promise<{ id: string }> };
 type Role = 'owner' | 'editor' | 'viewer';
@@ -81,7 +82,7 @@ export default async function SessionsPage({ params }: Props) {
               {past.slice().reverse().slice(0, 10).map((s) => (
                 <li key={s.id} className="flex items-center justify-between py-2.5 text-sm">
                   <span className="text-zinc-300">{s.title || 'Session'}</span>
-                  <span className="text-zinc-500">{new Date(s.startsAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                  <span className="text-zinc-500"><LocalShortDate iso={s.startsAt} /></span>
                 </li>
               ))}
             </ul>
