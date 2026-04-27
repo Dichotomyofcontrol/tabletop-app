@@ -4,7 +4,7 @@ import { getAdminDb } from '@/lib/firebase/admin';
 import { getCurrentUser } from '@/lib/firebase/server';
 import { createSession, rsvp, upsertCharacter } from '@/app/app/actions';
 
-type Props = { params: Promise<{ id: string }> };
+type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ saved?: string }> };
 
 function fmt(iso: string) {
   return new Date(iso).toLocaleString('en-US', {
@@ -18,8 +18,9 @@ function fmt(iso: string) {
 
 type Role = 'owner' | 'editor' | 'viewer';
 
-export default async function CampaignPage({ params }: Props) {
+export default async function CampaignPage({ params, searchParams }: Props) {
   const { id } = await params;
+  const sp = await searchParams;
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
@@ -103,6 +104,11 @@ export default async function CampaignPage({ params }: Props) {
 
   return (
     <div className="space-y-10">
+      {sp.saved === 'character' && (
+        <div className="rounded-md bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 px-4 py-2 text-sm text-green-700 dark:text-green-300">
+          Character saved.
+        </div>
+      )}
       <header>
         <Link
           href="/app"

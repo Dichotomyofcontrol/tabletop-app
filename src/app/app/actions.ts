@@ -215,4 +215,18 @@ export async function upsertCharacter(formData: FormData) {
   }
 
   revalidatePath(`/app/campaigns/${campaignId}`);
+  redirect(`/app/campaigns/${campaignId}?saved=character`);
+}
+
+// --------- profile ------------------------------------------------
+
+export async function updateProfile(formData: FormData) {
+  const user = await requireUser();
+  const displayName = String(formData.get('display_name') ?? '').trim();
+  if (!displayName) {
+    return redirect('/app/settings?error=Display+name+is+required');
+  }
+  await getAdminDb().collection('users').doc(user.uid).update({ displayName });
+  revalidatePath('/app', 'layout');
+  redirect('/app/settings?saved=1');
 }
