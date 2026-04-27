@@ -43,30 +43,38 @@ function LoginForm() {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="w-full max-w-sm bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-8 shadow-sm"
-    >
-      <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50 mb-6">
-        Log in
-      </h1>
-      {error && <p className="mb-4 text-sm text-red-600 dark:text-red-400">{error}</p>}
+    <form onSubmit={handleSubmit} className="card-mystic w-full max-w-sm rounded-xl p-8">
+      <h1 className="font-display text-3xl gold-text mb-1">Welcome back</h1>
+      <p className="text-sm text-zinc-400 mb-6">The tavern remembers you.</p>
+
+      {error && (
+        <p className="mb-4 px-3 py-2 rounded-md bg-red-950/50 border border-red-900/50 text-sm text-red-300">
+          {error}
+        </p>
+      )}
+
       <label className="block mb-4">
-        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Email</span>
+        <span className="text-xs uppercase tracking-widest text-amber-200/70">Email</span>
         <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-          className="mt-1 w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50" />
+          className="input-mystic mt-1.5 w-full px-3 py-2.5 rounded-md" />
       </label>
+
       <label className="block mb-6">
-        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Password</span>
+        <span className="text-xs uppercase tracking-widest text-amber-200/70">Password</span>
         <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
-          className="mt-1 w-full px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50" />
+          className="input-mystic mt-1.5 w-full px-3 py-2.5 rounded-md" />
       </label>
+
       <button type="submit" disabled={busy}
-        className="w-full px-4 py-2 rounded-md bg-zinc-900 dark:bg-zinc-50 text-zinc-50 dark:text-zinc-900 font-medium hover:opacity-90 transition disabled:opacity-50">
-        {busy ? 'Logging in…' : 'Log in'}
+        className="btn-gold w-full px-4 py-2.5 rounded-md text-sm uppercase tracking-wide">
+        {busy ? 'Opening the gate…' : 'Enter'}
       </button>
-      <p className="mt-6 text-sm text-center text-zinc-600 dark:text-zinc-400">
-        No account? <Link href="/signup" className="text-zinc-900 dark:text-zinc-50 underline">Sign up</Link>
+
+      <p className="mt-6 text-sm text-center text-zinc-400">
+        New here?{' '}
+        <Link href="/signup" className="text-amber-300 hover:text-amber-200 underline-offset-2 hover:underline">
+          Sign up
+        </Link>
       </p>
     </form>
   );
@@ -74,10 +82,8 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="flex flex-1 items-center justify-center bg-zinc-50 dark:bg-zinc-950 px-6">
-      <Suspense fallback={null}>
-        <LoginForm />
-      </Suspense>
+    <main className="flex flex-1 items-center justify-center px-6 py-12">
+      <Suspense fallback={null}><LoginForm /></Suspense>
     </main>
   );
 }

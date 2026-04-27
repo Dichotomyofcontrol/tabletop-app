@@ -1,26 +1,121 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg-base: #0a0810;
+  --bg-deep: #06050a;
+  --gold-50: #fef3c7;
+  --gold-300: #fcd34d;
+  --gold-400: #fbbf24;
+  --gold-500: #f59e0b;
+  --gold-600: #d97706;
+  --wine: #4c1d95;
+  --parchment: #f5e6c8;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html, body {
+  background-color: var(--bg-deep);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: #e7dfd1;
+  background-image:
+    radial-gradient(ellipse at 15% -10%, rgba(168, 85, 247, 0.10), transparent 45%),
+    radial-gradient(ellipse at 85% 110%, rgba(245, 158, 11, 0.07), transparent 55%),
+    radial-gradient(ellipse at 50% 50%, rgba(76, 29, 149, 0.04), transparent 70%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+/* Subtle grain overlay so the gradient doesn't look digital */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Make sure layout stacks above the grain */
+body > * { position: relative; z-index: 1; }
+
+.font-display { font-family: var(--font-cinzel), Georgia, serif; letter-spacing: 0.02em; }
+
+.gold-text {
+  background: linear-gradient(180deg, #fef3c7 0%, #fbbf24 60%, #b45309 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.card-mystic {
+  background:
+    linear-gradient(180deg, rgba(39, 39, 42, 0.55) 0%, rgba(15, 12, 22, 0.75) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.12);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: inset 0 1px 0 rgba(254, 243, 199, 0.04), 0 12px 40px -16px rgba(0, 0, 0, 0.6);
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+.card-mystic:hover {
+  border-color: rgba(245, 158, 11, 0.32);
+  box-shadow: inset 0 1px 0 rgba(254, 243, 199, 0.08), 0 16px 48px -12px rgba(0, 0, 0, 0.7);
+}
+
+.btn-gold {
+  background: linear-gradient(180deg, #fcd34d 0%, #f59e0b 60%, #b45309 100%);
+  color: #1c1917;
+  border: 1px solid rgba(180, 83, 9, 0.6);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 4px 16px -4px rgba(245, 158, 11, 0.4);
+  transition: filter 0.15s, transform 0.05s;
+  font-weight: 600;
+}
+.btn-gold:hover { filter: brightness(1.08); }
+.btn-gold:active { transform: translateY(1px); }
+.btn-gold:disabled { opacity: 0.55; cursor: not-allowed; filter: grayscale(0.4); }
+
+.btn-ghost {
+  background: rgba(245, 158, 11, 0.04);
+  color: #fde68a;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  transition: all 0.15s;
+}
+.btn-ghost:hover {
+  background: rgba(245, 158, 11, 0.10);
+  border-color: rgba(245, 158, 11, 0.5);
+  color: #fef3c7;
+}
+
+.input-mystic {
+  background: rgba(6, 5, 10, 0.6);
+  border: 1px solid rgba(245, 158, 11, 0.18);
+  color: #fef3c7;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.input-mystic::placeholder { color: rgba(231, 223, 209, 0.4); }
+.input-mystic:focus {
+  outline: none;
+  border-color: rgba(245, 158, 11, 0.6);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+}
+
+.divider-rune {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.4), transparent);
+}
+
+.tag-rune {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  background: rgba(245, 158, 11, 0.08);
+  color: #fcd34d;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }

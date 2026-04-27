@@ -3,208 +3,142 @@ import { getAdminDb } from '@/lib/firebase/admin';
 import { getCurrentUser } from '@/lib/firebase/server';
 import { rsvp } from './actions';
 
-function formatWhen(iso: string) {
+function fmtWhen(iso: string) {
   return new Date(iso).toLocaleString('en-US', {
-    weekday: 'long',
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
+    weekday: 'long', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
   });
 }
-
 function countdown(iso: string) {
   const ms = new Date(iso).getTime() - Date.now();
   if (ms < 0) return 'now';
-  const days = Math.floor(ms / 86400000);
-  const hours = Math.floor((ms % 86400000) / 3600000);
-  if (days > 0) return `in ${days}d ${hours}h`;
-  if (hours > 0) return `in ${hours}h`;
-  const mins = Math.floor(ms / 60000);
-  return `in ${mins}m`;
+  const d = Math.floor(ms / 86400000);
+  const h = Math.floor((ms % 86400000) / 3600000);
+  if (d > 0) return `in ${d}d ${h}h`;
+  if (h > 0) return `in ${h}h`;
+  return `in ${Math.floor(ms / 60000)}m`;
 }
-
-type CampaignRow = {
-  id: string;
-  name: string;
-  description: string | null;
-  system: string | null;
-  venue: string | null;
-};
-
-type UpcomingSession = {
-  id: string;
-  campaignId: string;
-  campaignName: string;
-  startsAt: string;
-  title: string | null;
-  venue: string | null;
-};
 
 export default async function Dashboard() {
   const user = await getCurrentUser();
   if (!user) return null;
-
   const db = getAdminDb();
 
-  // Campaigns I'm in.
-  const campaignsSnap = await db
-    .collection('campaigns')
-    .where('memberIds', 'array-contains', user.uid)
-    .get();
+  const campaignsSnap = await db.collection('campaigns')
+    .where('memberIds', 'array-contains', user.uid).get();
+  const campaigns = campaignsSnap.docs.map((d) => ({
+    id: d.id,
+    name: d.data().name as string,
+    description: (d.data().description as string | null) ?? null,
+    system: (d.data().system as string | null) ?? null,
+    venue: (d.data().venue as string | null) ?? null,
+  }));
 
-  const campaigns: CampaignRow[] = campaignsSnap.docs.map((d) => {
-    const data = d.data();
-    return {
-      id: d.id,
-      name: data.name,
-      description: data.description ?? null,
-      system: data.system ?? null,
-      venue: data.venue ?? null,
-    };
-  });
-
-  // Upcoming sessions across all my campaigns.
   const nowIso = new Date().toISOString();
-  const sessionLists = await Promise.all(
-    campaigns.map(async (c) => {
-      const snap = await db
-        .collection('campaigns')
-        .doc(c.id)
-        .collection('sessions')
-        .where('startsAt', '>=', nowIso)
-        .orderBy('startsAt', 'asc')
-        .limit(3)
-        .get();
-      return snap.docs.map<UpcomingSession>((d) => ({
-        id: d.id,
-        campaignId: c.id,
-        campaignName: c.name,
-        startsAt: d.data().startsAt,
-        title: d.data().title ?? null,
-        venue: d.data().venue ?? null,
-      }));
-    })
-  );
-  const upcoming = sessionLists
-    .flat()
-    .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  const sessionLists = await Promise.all(campaigns.map(async (c) => {
+    const snap = await db.collection('campaigns').doc(c.id).collection('sessions')
+      .where('startsAt', '>=', nowIso).orderBy('startsAt', 'asc').limit(3).get();
+    return snap.docs.map((d) => ({
+      id: d.id,
+      campaignId: c.id,
+      campaignName: c.name,
+      startsAt: d.data().startsAt as string,
+      title: (d.data().title as string | null) ?? null,
+      venue: (d.data().venue as string | null) ?? null,
+    }));
+  }));
+  const upcoming = sessionLists.flat().sort((a, b) => a.startsAt.localeCompare(b.startsAt));
   const next = upcoming[0];
 
-  // My RSVP for next session.
   let myRsvp: 'yes' | 'no' | 'maybe' | null = null;
   if (next) {
-    const rsvpDoc = await db
-      .collection('campaigns')
-      .doc(next.campaignId)
-      .collection('sessions')
-      .doc(next.id)
-      .collection('rsvps')
-      .doc(user.uid)
-      .get();
+    const rsvpDoc = await db.collection('campaigns').doc(next.campaignId)
+      .collection('sessions').doc(next.id).collection('rsvps').doc(user.uid).get();
     myRsvp = (rsvpDoc.data()?.status as 'yes' | 'no' | 'maybe' | null) ?? null;
   }
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-12">
+      {/* Hero */}
       <section>
-        <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500 mb-3">
-          Next session
-        </h2>
+        <div className="flex items-baseline justify-between mb-3">
+          <span className="tag-rune">Next session</span>
+          {next && <span className="text-xs text-amber-200/60 font-mono">{countdown(next.startsAt)}</span>}
+        </div>
         {next ? (
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 shadow-sm">
-            <div className="flex items-baseline justify-between flex-wrap gap-2">
-              <h3 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+          <div className="card-mystic rounded-xl p-7 relative overflow-hidden">
+            <div className="absolute -top-20 -right-20 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="relative">
+              <h2 className="font-display text-3xl md:text-4xl text-amber-50 leading-tight">
                 {next.campaignName}
-                {next.title ? (
-                  <span className="text-zinc-400 font-normal"> — {next.title}</span>
-                ) : null}
-              </h3>
-              <span className="text-sm text-zinc-500">
-                {countdown(next.startsAt)}
-              </span>
-            </div>
-            <p className="mt-2 text-zinc-700 dark:text-zinc-300">
-              {formatWhen(next.startsAt)}
-              {next.venue ? ` · ${next.venue}` : ''}
-            </p>
-            <div className="mt-5 flex gap-2">
-              {(['yes', 'maybe', 'no'] as const).map((s) => (
-                <form key={s} action={rsvp}>
-                  <input type="hidden" name="session_id" value={next.id} />
-                  <input type="hidden" name="campaign_id" value={next.campaignId} />
-                  <input type="hidden" name="status" value={s} />
-                  <button
-                    type="submit"
-                    className={`px-4 py-2 rounded-md text-sm font-medium border transition ${
-                      myRsvp === s
-                        ? 'bg-zinc-900 dark:bg-zinc-50 text-zinc-50 dark:text-zinc-900 border-zinc-900 dark:border-zinc-50'
-                        : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800'
-                    }`}
-                  >
-                    {s === 'yes' ? "I'm in" : s === 'maybe' ? 'Maybe' : 'Out'}
-                  </button>
-                </form>
-              ))}
-              <Link
-                href={`/app/campaigns/${next.campaignId}`}
-                className="ml-auto px-4 py-2 text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50"
-              >
-                View campaign →
-              </Link>
+              </h2>
+              {next.title && (
+                <p className="font-display text-xl text-amber-200/70 mt-1 italic">— {next.title}</p>
+              )}
+              <p className="mt-4 text-zinc-300">
+                {fmtWhen(next.startsAt)}
+                {next.venue && <span className="text-zinc-500"> · {next.venue}</span>}
+              </p>
+              <div className="mt-6 flex flex-wrap gap-2 items-center">
+                {(['yes', 'maybe', 'no'] as const).map((s) => (
+                  <form key={s} action={rsvp}>
+                    <input type="hidden" name="session_id" value={next.id} />
+                    <input type="hidden" name="campaign_id" value={next.campaignId} />
+                    <input type="hidden" name="status" value={s} />
+                    <button type="submit"
+                      className={`px-4 py-2 rounded-md text-sm font-medium uppercase tracking-wide transition ${
+                        myRsvp === s
+                          ? 'btn-gold'
+                          : 'btn-ghost'
+                      }`}>
+                      {s === 'yes' ? "I'm in" : s === 'maybe' ? 'Maybe' : 'Out'}
+                    </button>
+                  </form>
+                ))}
+                <Link href={`/app/campaigns/${next.campaignId}`}
+                  className="ml-auto text-sm text-amber-300/80 hover:text-amber-200">
+                  View campaign →
+                </Link>
+              </div>
             </div>
           </div>
         ) : (
-          <div className="bg-white dark:bg-zinc-900 border border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl p-8 text-center">
-            <p className="text-zinc-600 dark:text-zinc-400">
-              No upcoming sessions. Add one from a campaign page.
-            </p>
+          <div className="card-mystic rounded-xl p-10 text-center">
+            <p className="text-zinc-400">No upcoming sessions. Add one from a campaign page.</p>
           </div>
         )}
       </section>
 
+      {/* Campaigns */}
       <section>
-        <div className="flex items-baseline justify-between mb-3">
-          <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500">
-            My campaigns
-          </h2>
-          <Link
-            href="/app/campaigns/new"
-            className="text-sm text-zinc-900 dark:text-zinc-50 underline"
-          >
-            New campaign
+        <div className="flex items-baseline justify-between mb-4">
+          <span className="tag-rune">My campaigns</span>
+          <Link href="/app/campaigns/new"
+            className="text-sm text-amber-300 hover:text-amber-200 transition">
+            + New campaign
           </Link>
         </div>
         {campaigns.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {campaigns.map((c) => (
-              <Link
-                key={c.id}
-                href={`/app/campaigns/${c.id}`}
-                className="block bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-5 hover:border-zinc-400 dark:hover:border-zinc-600 transition"
-              >
-                <h3 className="font-semibold text-zinc-900 dark:text-zinc-50">
+              <Link key={c.id} href={`/app/campaigns/${c.id}`}
+                className="card-mystic rounded-lg p-5 block group">
+                <h3 className="font-display text-amber-100 text-lg leading-snug group-hover:text-amber-50 transition">
                   {c.name}
                 </h3>
-                {c.system && <p className="text-xs text-zinc-500 mt-1">{c.system}</p>}
-                {c.venue && <p className="text-xs text-zinc-500">{c.venue}</p>}
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {c.system && <span className="tag-rune !text-[10px] !py-0.5">{c.system}</span>}
+                  {c.venue && <span className="tag-rune !text-[10px] !py-0.5 !bg-violet-500/8 !text-violet-300 !border-violet-500/20">{c.venue}</span>}
+                </div>
                 {c.description && (
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-3 line-clamp-3">
-                    {c.description}
-                  </p>
+                  <p className="text-sm text-zinc-400 mt-3 line-clamp-3 leading-relaxed">{c.description}</p>
                 )}
               </Link>
             ))}
           </div>
         ) : (
-          <div className="bg-white dark:bg-zinc-900 border border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl p-8 text-center">
-            <p className="text-zinc-600 dark:text-zinc-400 mb-4">
-              You&apos;re not in any campaigns yet.
-            </p>
-            <Link
-              href="/app/campaigns/new"
-              className="inline-block px-4 py-2 rounded-md bg-zinc-900 dark:bg-zinc-50 text-zinc-50 dark:text-zinc-900 font-medium"
-            >
+          <div className="card-mystic rounded-xl p-10 text-center">
+            <p className="text-zinc-400 mb-5">No campaigns yet — every legend starts somewhere.</p>
+            <Link href="/app/campaigns/new" className="btn-gold inline-block px-6 py-2.5 rounded-md text-sm uppercase tracking-wide">
               Create your first campaign
             </Link>
           </div>
