@@ -13,7 +13,7 @@ function initials(name: string) { return name.split(/\s+/).map(p => p[0]).join('
 
 export default function SessionRow({ campaignId, session, myRsvp, partyRsvps, canEdit, color }: {
   campaignId: string;
-  session: { id: string; startsAt: string; title: string | null; venue: string | null; notes: string | null };
+  session: { id: string; startsAt: string; title: string | null; venue: string | null; notes: string | null; seriesId?: string | null };
   myRsvp: 'yes' | 'no' | 'maybe' | null;
   partyRsvps: PartyRsvp[];
   canEdit: boolean;
@@ -21,7 +21,7 @@ export default function SessionRow({ campaignId, session, myRsvp, partyRsvps, ca
 }) {
   const [editing, setEditing] = useState(false);
   if (editing) {
-    return <EditSessionPanel campaignId={campaignId} session={session} onCancel={() => setEditing(false)} onSaved={() => setEditing(false)} />;
+    return <EditSessionPanel campaignId={campaignId} session={session} seriesId={session.seriesId ?? null} onCancel={() => setEditing(false)} onSaved={() => setEditing(false)} />;
   }
   const order = { yes: 0, maybe: 1, no: 2 };
   const sorted = [...partyRsvps].sort((a, b) => order[a.status] - order[b.status]);
@@ -65,7 +65,7 @@ export default function SessionRow({ campaignId, session, myRsvp, partyRsvps, ca
                 <path d="M14.69 2.66a2.25 2.25 0 0 1 3.18 3.18l-9.93 9.93a3 3 0 0 1-1.27.76l-3.06.92a.75.75 0 0 1-.94-.94l.92-3.06a3 3 0 0 1 .76-1.27l9.93-9.93Z"/>
               </svg>
             </button>
-            <DeleteSessionButton campaignId={campaignId} sessionId={session.id} sessionTitle={session.title || 'this session'} />
+            <DeleteSessionButton campaignId={campaignId} sessionId={session.id} sessionTitle={session.title || 'this session'} seriesId={session.seriesId ?? null} startsAt={session.startsAt} />
           </div>
         )}
       </div>

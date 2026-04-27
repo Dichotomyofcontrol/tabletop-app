@@ -34,6 +34,7 @@ export default async function SessionsPage({ params }: Props) {
     title: (d.data().title as string | null) ?? null,
     venue: (d.data().venue as string | null) ?? null,
     notes: (d.data().notes as string | null) ?? null,
+    seriesId: (d.data().seriesId as string | null) ?? null,
   }));
   const now = new Date().toISOString();
   const upcoming = sessions.filter((s) => s.startsAt >= now);

@@ -89,6 +89,46 @@ export default async function Dashboard() {
         <Link href="/app/campaigns/new" className="btn-gold">New campaign</Link>
       </div>
 
+      <section>
+        <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-500 mb-4">All campaigns</h2>
+        {campaigns.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {campaigns.map((c) => (
+              <Link key={c.id} href={`/app/campaigns/${c.id}`}
+                className="group rounded-lg border border-white/[0.07] bg-zinc-900/40 hover:border-white/[0.14] transition relative overflow-hidden color-bar block" style={{ ['--c' as string]: getCampaignColor(c.color).hex }}>
+                {c.bannerUrl && (
+                  <div className="aspect-[3/1] w-full overflow-hidden border-b border-white/[0.06]">
+                    <img src={c.bannerUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+                  </div>
+                )}
+                <div className="p-5">
+                <h3 className="text-zinc-100 font-medium leading-tight group-hover:text-white transition">{c.name}</h3>
+                <p className="text-xs text-zinc-500 mt-1">
+                  {[c.system, c.venue].filter(Boolean).join(' · ') || 'No details yet'}
+                </p>
+                {c.description && (
+                  <p className="text-sm text-zinc-400 mt-3 line-clamp-2 leading-relaxed">{c.description}</p>
+                )}
+                <p className="text-xs text-zinc-500 mt-4 flex items-center gap-1.5">
+                  <span className="w-1 h-1 rounded-full bg-zinc-600" />
+                  {c.memberIds.length} player{c.memberIds.length === 1 ? '' : 's'}
+                </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-dashed border-white/[0.08] p-12 text-center">
+            <p className="text-zinc-300">No campaigns yet.</p>
+            <p className="text-sm text-zinc-500 mt-1 mb-5">Create your first one to get started.</p>
+            <Link href="/app/campaigns/new" className="btn-gold inline-block">Create campaign</Link>
+          </div>
+        )}
+      </section>
+
+      <div className="my-10 h-px bg-black/[0.08] dark:bg-white/[0.06]" />
+
+
       {next ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-12">
           {/* Hero card — 2/3 */}
@@ -216,42 +256,6 @@ export default async function Dashboard() {
       )}
 
       {/* Campaigns */}
-      <section>
-        <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-500 mb-4">All campaigns</h2>
-        {campaigns.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {campaigns.map((c) => (
-              <Link key={c.id} href={`/app/campaigns/${c.id}`}
-                className="group rounded-lg border border-white/[0.07] bg-zinc-900/40 hover:border-white/[0.14] transition relative overflow-hidden color-bar block" style={{ ['--c' as string]: getCampaignColor(c.color).hex }}>
-                {c.bannerUrl && (
-                  <div className="aspect-[3/1] w-full overflow-hidden border-b border-white/[0.06]">
-                    <img src={c.bannerUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
-                  </div>
-                )}
-                <div className="p-5">
-                <h3 className="text-zinc-100 font-medium leading-tight group-hover:text-white transition">{c.name}</h3>
-                <p className="text-xs text-zinc-500 mt-1">
-                  {[c.system, c.venue].filter(Boolean).join(' · ') || 'No details yet'}
-                </p>
-                {c.description && (
-                  <p className="text-sm text-zinc-400 mt-3 line-clamp-2 leading-relaxed">{c.description}</p>
-                )}
-                <p className="text-xs text-zinc-500 mt-4 flex items-center gap-1.5">
-                  <span className="w-1 h-1 rounded-full bg-zinc-600" />
-                  {c.memberIds.length} player{c.memberIds.length === 1 ? '' : 's'}
-                </p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-xl border border-dashed border-white/[0.08] p-12 text-center">
-            <p className="text-zinc-300">No campaigns yet.</p>
-            <p className="text-sm text-zinc-500 mt-1 mb-5">Create your first one to get started.</p>
-            <Link href="/app/campaigns/new" className="btn-gold inline-block">Create campaign</Link>
-          </div>
-        )}
-      </section>
-    </div>
+</div>
   );
 }

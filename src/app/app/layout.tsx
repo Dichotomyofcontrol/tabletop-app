@@ -1,8 +1,10 @@
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getAdminDb } from '@/lib/firebase/admin';
 import { getCurrentUser, getDisplayName } from '@/lib/firebase/server';
 import { ToastProvider } from './_components/toast';
 import Sidebar from './_components/sidebar';
+import AppShell from './_components/app-shell';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
@@ -21,12 +23,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .map(({ id, name, color }) => ({ id, name, color }));
 
+  const c = await cookies();
+  const sidebarOpen = c.get('sidebarOpen')?.value !== 'false';
+
   return (
     <ToastProvider>
-      <div className="flex min-h-screen">
-        <Sidebar campaigns={campaigns} displayName={displayName} email={user.email ?? ''} />
-        <main className="flex-1 min-w-0 page-fade">{children}</main>
-      </div>
+      <AppShell
+        initialOpen={sidebarOpen}
+        sidebar={<Sidebar campaigns={campaigns} displayName={displayName} email={user.email ?? ''} />}
+      >
+        {children}
+      </AppShell>
     </ToastProvider>
   );
 }

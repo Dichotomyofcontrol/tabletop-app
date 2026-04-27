@@ -184,6 +184,7 @@ export async function createSession(formData: FormData) {
   }
 
   const count = frequency === 'once' ? 1 : occurrences;
+  const seriesId = frequency === 'once' ? null : randomBytes(8).toString('hex');
   const writes: Promise<unknown>[] = [];
   for (let i = 0; i < count; i++) {
     let when: Date;
@@ -195,6 +196,7 @@ export async function createSession(formData: FormData) {
     writes.push(sessions.add({
       startsAt: when.toISOString(),
       title, venue, notes,
+      seriesId, seriesIndex: seriesId ? i : null,
       createdAt: now,
     }));
   }
@@ -411,4 +413,66 @@ export async function setTheme(formData: FormData) {
     sameSite: 'lax',
   });
   revalidatePath('/', 'layout');
+}
+
+// ---- Series ----
+
+export async function updateSessionSeries(formData: FormData) {
+  const user = await requireUser();
+  const campaignId = String(formData.get('campaign_id') ?? '');
+  const seriesId = String(formData.get('series_id') ?? '');
+  const fromIso = String(formData.get('from_iso') ?? '');
+  const newTimeOnly = String(formData.get('time_only') ?? '');
+  const title = String(formData.get('title') ?? '').trim();
+  const venue = String(formData.get('venue') ?? '').trim();
+  const notes = String(formData.get('notes') ?? '').trim();
+  if (!campaignId || !seriesId || !fromIso) throw new Error('Missing fields');
+  await requireEditor(user.uid, campaignId);
+
+  const sessSnap = await getAdminDb().collection('campaigns').doc(campaignId)
+    .collection('sessions')
+    .where('seriesId', '==', seriesId)
+    .where('startsAt', '>=', fromIso)
+    .get();
+
+  const updates = sessSnap.docs.map((d) => {
+    const cur = new Date(d.data().startsAt as string);
+    const update: Record<string, unknown> = {};
+    if (newTimeOnly) {
+      const [h, m] = newTimeOnly.split(':').map(Number);
+      cur.setHours(h, m, 0, 0);
+      update.startsAt = cur.toISOString();
+    }
+    update.title = title || null;
+    update.venue = venue || null;
+    update.notes = notes || null;
+    return d.ref.update(update);
+  });
+  await Promise.all(updates);
+
+  revalidatePath(`/app/campaigns/${campaignId}`, 'layout');
+  revalidatePath('/app', 'layout');
+}
+
+export async function deleteSessionSeries(formData: FormData) {
+  const user = await requireUser();
+  const campaignId = String(formData.get('campaign_id') ?? '');
+  const seriesId = String(formData.get('series_id') ?? '');
+  const fromIso = String(formData.get('from_iso') ?? '');
+  if (!campaignId || !seriesId || !fromIso) throw new Error('Missing fields');
+  await requireEditor(user.uid, campaignId);
+
+  const sessSnap = await getAdminDb().collection('campaigns').doc(campaignId)
+    .collection('sessions')
+    .where('seriesId', '==', seriesId)
+    .where('startsAt', '>=', fromIso)
+    .get();
+
+  for (const doc of sessSnap.docs) {
+    const rsvps = await doc.ref.collection('rsvps').get();
+    for (const r of rsvps.docs) await r.ref.delete();
+    await doc.ref.delete();
+  }
+  revalidatePath(`/app/campaigns/${campaignId}`, 'layout');
+  revalidatePath('/app', 'layout');
 }
