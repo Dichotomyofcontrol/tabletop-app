@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { getAdminDb } from '@/lib/firebase/admin';
 import { getCurrentUser } from '@/lib/firebase/server';
@@ -69,11 +70,38 @@ export default async function SessionsPage({ params }: Props) {
           </div>
         )}
         {canEdit && (
-          <div className="mt-5">
+          <div className="mt-5 space-y-3">
             <AddSessionForm campaignId={id} defaultVenue={data.venue ?? undefined} />
+            <p className="text-xs text-zinc-500">
+              Or{' '}
+              <Link href={`/app/campaigns/${id}/polls/new`} className="text-amber-300 hover:text-amber-200 underline">
+                schedule by poll
+              </Link>{' '}
+              if the party hasn&apos;t agreed on a date.
+            </p>
           </div>
         )}
       </section>
+
+      {openPolls.length > 0 && (
+        <section>
+          <h2 className="text-lg font-semibold text-zinc-100 mb-4">Open polls</h2>
+          <ul className="space-y-2">
+            {openPolls.map((p) => (
+              <li key={p.id}>
+                <Link href={`/app/polls/${p.id}`}
+                  className="flex items-center justify-between px-4 py-3 rounded-lg border border-black/[0.10] dark:border-white/[0.07] bg-white dark:bg-zinc-900/40 hover:border-amber-500/30 transition">
+                  <div className="min-w-0">
+                    <p className="text-sm text-zinc-100 truncate">{p.title}</p>
+                    <p className="text-xs text-zinc-500 mt-0.5">{p.optionsCount} date option{p.optionsCount === 1 ? '' : 's'} · awaiting responses</p>
+                  </div>
+                  <span className="text-xs text-amber-300 shrink-0 ml-4">View poll →</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {past.length > 0 && (
         <section>
