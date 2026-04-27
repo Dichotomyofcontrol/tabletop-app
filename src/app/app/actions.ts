@@ -1,5 +1,6 @@
 'use server';
 
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { randomBytes } from 'crypto';
@@ -396,4 +397,18 @@ export async function removeCampaignBanner(formData: FormData) {
   });
   revalidatePath('/app', 'layout');
   revalidatePath(`/app/campaigns/${campaignId}`, 'layout');
+}
+
+// ---- Theme ----
+
+export async function setTheme(formData: FormData) {
+  const theme = String(formData.get('theme') ?? 'dark');
+  if (!['light', 'dark'].includes(theme)) throw new Error('Invalid theme');
+  const c = await cookies();
+  c.set('theme', theme, {
+    maxAge: 60 * 60 * 24 * 365,
+    path: '/',
+    sameSite: 'lax',
+  });
+  revalidatePath('/', 'layout');
 }

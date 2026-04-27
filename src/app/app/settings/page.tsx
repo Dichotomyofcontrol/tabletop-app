@@ -1,7 +1,9 @@
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getAdminDb } from '@/lib/firebase/admin';
 import { getCurrentUser } from '@/lib/firebase/server';
 import { updateProfile } from '@/app/app/actions';
+import ThemeToggle from '@/app/app/_components/theme-toggle';
 
 type Props = { searchParams: Promise<{ saved?: string; error?: string }> };
 
@@ -11,41 +13,53 @@ export default async function SettingsPage({ searchParams }: Props) {
   if (!user) redirect('/login');
   const snap = await getAdminDb().collection('users').doc(user.uid).get();
   const displayName = (snap.data()?.displayName as string | undefined) ?? '';
+  const cookieStore = await cookies();
+  const theme = (cookieStore.get('theme')?.value === 'light' ? 'light' : 'dark') as 'light' | 'dark';
 
   return (
-    <div className="max-w-xl mx-auto px-8 py-10">
-      <h1 className="text-3xl font-semibold text-zinc-50 tracking-tight mb-2">Account</h1>
-      <p className="text-zinc-500 mb-8 text-sm">Your name and login.</p>
+    <div className="max-w-xl mx-auto px-8 py-10 space-y-6">
+      <div>
+        <h1 className="text-3xl font-semibold text-zinc-50 tracking-tight mb-2">Account</h1>
+        <p className="text-zinc-500 text-sm">Your name, login, and preferences.</p>
+      </div>
 
       {sp.saved && (
-        <p className="mb-4 px-3 py-2 rounded-md bg-emerald-950/30 border border-emerald-900/40 text-sm text-emerald-300">
+        <p className="px-3 py-2 rounded-md bg-emerald-950/30 dark:bg-emerald-950/30 border border-emerald-900/40 text-sm text-emerald-700 dark:text-emerald-300">
           Saved.
         </p>
       )}
       {sp.error && (
-        <p className="mb-4 px-3 py-2 rounded-md bg-red-950/40 border border-red-900/40 text-sm text-red-300">
+        <p className="px-3 py-2 rounded-md bg-red-950/40 border border-red-900/40 text-sm text-red-700 dark:text-red-300">
           {sp.error}
         </p>
       )}
 
-      <form action={updateProfile} className="space-y-5">
-        <label className="block">
-          <span className="text-xs text-zinc-400 font-medium">Email</span>
-          <input type="email" disabled value={user.email ?? ''}
-            className="input-mystic mt-1.5 w-full px-3 py-2.5 rounded-md opacity-60 cursor-not-allowed" />
-          <span className="block mt-1.5 text-xs text-zinc-500">
-            Managed by Firebase Auth. Email changes aren&apos;t built yet.
-          </span>
-        </label>
+      <section className="rounded-lg border border-black/[0.10] dark:border-white/[0.07] bg-white dark:bg-zinc-900/30 p-6">
+        <h2 className="text-base font-semibold text-zinc-100 mb-1">Profile</h2>
+        <p className="text-sm text-zinc-500 mb-5">Your name and email.</p>
+        <form action={updateProfile} className="space-y-5">
+          <label className="block">
+            <span className="text-xs text-zinc-400 font-medium">Email</span>
+            <input type="email" disabled value={user.email ?? ''}
+              className="input-mystic mt-1.5 w-full px-3 py-2.5 rounded-md opacity-60 cursor-not-allowed" />
+            <span className="block mt-1.5 text-xs text-zinc-500">
+              Managed by Firebase Auth. Email changes aren&apos;t built yet.
+            </span>
+          </label>
+          <label className="block">
+            <span className="text-xs text-zinc-400 font-medium">Display name</span>
+            <input type="text" name="display_name" required defaultValue={displayName}
+              className="input-mystic mt-1.5 w-full px-3 py-2.5 rounded-md" />
+          </label>
+          <button type="submit" className="btn-gold">Save changes</button>
+        </form>
+      </section>
 
-        <label className="block">
-          <span className="text-xs text-zinc-400 font-medium">Display name</span>
-          <input type="text" name="display_name" required defaultValue={displayName}
-            className="input-mystic mt-1.5 w-full px-3 py-2.5 rounded-md" />
-        </label>
-
-        <button type="submit" className="btn-gold">Save changes</button>
-      </form>
+      <section className="rounded-lg border border-black/[0.10] dark:border-white/[0.07] bg-white dark:bg-zinc-900/30 p-6">
+        <h2 className="text-base font-semibold text-zinc-100 mb-1">Appearance</h2>
+        <p className="text-sm text-zinc-500 mb-5">Choose light or dark.</p>
+        <ThemeToggle current={theme} />
+      </section>
     </div>
   );
 }
