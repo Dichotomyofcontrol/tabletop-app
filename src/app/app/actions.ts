@@ -145,13 +145,43 @@ export async function createSession(formData: FormData) {
   const title = String(formData.get('title') ?? '').trim() || null;
   const venue = String(formData.get('venue') ?? '').trim() || null;
   const notes = String(formData.get('notes') ?? '').trim() || null;
+  const frequency = String(formData.get('frequency') ?? 'once') as 'once' | 'weekly' | 'biweekly' | 'monthly';
+  const occRaw = parseInt(String(formData.get('occurrences') ?? '1'));
+  const occurrences = Math.max(1, Math.min(52, isNaN(occRaw) ? 1 : occRaw));
   if (!campaignId || !startsAt) throw new Error('Date is required');
   await requireEditor(user.uid, campaignId);
-  await getAdminDb().collection('campaigns').doc(campaignId).collection('sessions').add({
-    startsAt: new Date(startsAt).toISOString(),
-    title, venue, notes,
-    createdAt: new Date().toISOString(),
-  });
+
+  const base = new Date(startsAt);
+  const sessions = getAdminDb().collection('campaigns').doc(campaignId).collection('sessions');
+  const now = new Date().toISOString();
+
+  function addMonths(d: Date, m: number): Date {
+    const r = new Date(d);
+    const day = r.getDate();
+    r.setDate(1);
+    r.setMonth(r.getMonth() + m);
+    const last = new Date(r.getFullYear(), r.getMonth() + 1, 0).getDate();
+    r.setDate(Math.min(day, last));
+    return r;
+  }
+
+  const count = frequency === 'once' ? 1 : occurrences;
+  const writes: Promise<unknown>[] = [];
+  for (let i = 0; i < count; i++) {
+    let when: Date;
+    if (i === 0) when = base;
+    else if (frequency === 'weekly') when = new Date(base.getTime() + i * 7 * 86400000);
+    else if (frequency === 'biweekly') when = new Date(base.getTime() + i * 14 * 86400000);
+    else if (frequency === 'monthly') when = addMonths(base, i);
+    else when = base;
+    writes.push(sessions.add({
+      startsAt: when.toISOString(),
+      title, venue, notes,
+      createdAt: now,
+    }));
+  }
+  await Promise.all(writes);
+
   revalidatePath(`/app/campaigns/${campaignId}`);
   revalidatePath('/app');
 }
