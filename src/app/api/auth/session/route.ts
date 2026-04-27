@@ -1,16 +1,51 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { cookies } from 'next/headers';
+import { FieldValue } from 'firebase-admin/firestore';
 import { getAdminAuth, getAdminDb } from '@/lib/firebase/admin';
 import { SESSION_COOKIE } from '@/lib/firebase/server';
 
-const SESSION_DURATION_MS = 60 * 60 * 24 * 5 * 1000; // 5 days
+const SESSION_DURATION_MS = 60 * 60 * 24 * 5 * 1000;
 
-/** POST { idToken, displayName? } → mints a session cookie. */
+async function migrateGuestVotes(guestId: string, realUid: string) {
+  if (!guestId.startsWith('g_') || guestId === realUid) return;
+  const db = getAdminDb();
+  let partsSnap;
+  try {
+    partsSnap = await db.collectionGroup('participants').where('uid', '==', guestId).get();
+  } catch {
+    return; // index not ready or query failed — skip silently
+  }
+  for (const partDoc of partsSnap.docs) {
+    const pollRef = partDoc.ref.parent.parent;
+    if (!pollRef) continue;
+    const guestData = partDoc.data();
+    const realPartRef = pollRef.collection('participants').doc(realUid);
+    const existingReal = await realPartRef.get();
+    const merged = {
+      uid: realUid,
+      displayName: existingReal.exists
+        ? existingReal.data()?.displayName
+        : guestData.displayName,
+      responses: {
+        ...(guestData.responses ?? {}),
+        ...(existingReal.data()?.responses ?? {}),
+      },
+      respondedAt: new Date().toISOString(),
+      isGuest: false,
+    };
+    await realPartRef.set(merged, { merge: true });
+    await partDoc.ref.delete();
+    await pollRef.update({ memberIds: FieldValue.arrayUnion(realUid) });
+    try {
+      await pollRef.update({ memberIds: FieldValue.arrayRemove(guestId) });
+    } catch {}
+  }
+}
+
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
   const idToken: string | undefined = body?.idToken;
   const displayName: string | undefined = body?.displayName;
-
   if (!idToken) {
     return NextResponse.json({ error: 'Missing idToken' }, { status: 400 });
   }
@@ -32,7 +67,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Ensure a profile doc exists. Safe to call repeatedly.
   const userRef = getAdminDb().collection('users').doc(decodedUid);
   const existing = await userRef.get();
   if (!existing.exists) {
@@ -54,10 +88,18 @@ export async function POST(request: NextRequest) {
     maxAge: SESSION_DURATION_MS / 1000,
   });
 
+  // Migrate any guest votes from this device into the new account
+  const guestId = request.cookies.get('guestId')?.value;
+  if (guestId) {
+    try {
+      await migrateGuestVotes(guestId, decodedUid);
+    } catch {}
+    store.delete('guestId');
+  }
+
   return NextResponse.json({ ok: true });
 }
 
-/** DELETE → clear the cookie. */
 export async function DELETE() {
   const store = await cookies();
   store.delete(SESSION_COOKIE);
