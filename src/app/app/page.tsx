@@ -40,6 +40,7 @@ export default async function Dashboard() {
     venue: (d.data().venue as string | null) ?? null,
     memberIds: (d.data().memberIds as string[]) ?? [],
     color: (d.data().color as string | undefined) ?? 'amber',
+    bannerUrl: (d.data().bannerUrl as string | null) ?? null,
   }));
   const allMemberIds = Array.from(new Set(campaigns.flatMap((c) => c.memberIds)));
   const memberDocs = allMemberIds.length === 0 ? [] : await Promise.all(allMemberIds.map((uid) => db.collection('users').doc(uid).get()));
@@ -214,7 +215,13 @@ export default async function Dashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {campaigns.map((c) => (
               <Link key={c.id} href={`/app/campaigns/${c.id}`}
-                className="group rounded-lg border border-white/[0.07] bg-zinc-900/40 p-5 hover:border-white/[0.14] transition relative overflow-hidden color-bar" style={{ ['--c' as string]: getCampaignColor(c.color).hex }}>
+                className="group rounded-lg border border-white/[0.07] bg-zinc-900/40 hover:border-white/[0.14] transition relative overflow-hidden color-bar block" style={{ ['--c' as string]: getCampaignColor(c.color).hex }}>
+                {c.bannerUrl && (
+                  <div className="aspect-[3/1] w-full overflow-hidden border-b border-white/[0.06]">
+                    <img src={c.bannerUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+                  </div>
+                )}
+                <div className="p-5">
                 <h3 className="text-zinc-100 font-medium leading-tight group-hover:text-white transition">{c.name}</h3>
                 <p className="text-xs text-zinc-500 mt-1">
                   {[c.system, c.venue].filter(Boolean).join(' · ') || 'No details yet'}
@@ -226,6 +233,7 @@ export default async function Dashboard() {
                   <span className="w-1 h-1 rounded-full bg-zinc-600" />
                   {c.memberIds.length} player{c.memberIds.length === 1 ? '' : 's'}
                 </p>
+                </div>
               </Link>
             ))}
           </div>

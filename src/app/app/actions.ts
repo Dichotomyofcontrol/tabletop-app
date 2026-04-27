@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { randomBytes } from 'crypto';
 import { FieldValue } from 'firebase-admin/firestore';
-import { getAdminDb } from '@/lib/firebase/admin';
+import { getAdminDb, getAdminStorage } from '@/lib/firebase/admin';
 import { getCurrentUser } from '@/lib/firebase/server';
 import { pickRandomColor } from '@/lib/campaign-colors';
 
@@ -341,4 +341,55 @@ export async function updateProfile(formData: FormData) {
   await getAdminDb().collection('users').doc(user.uid).update({ displayName });
   revalidatePath('/app', 'layout');
   redirect('/app/settings?saved=1');
+}
+
+// ---- Banner ----
+
+export async function uploadCampaignBanner(formData: FormData) {
+  const user = await requireUser();
+  const campaignId = String(formData.get('campaign_id') ?? '');
+  const file = formData.get('banner') as File | null;
+  if (!campaignId || !file || file.size === 0) throw new Error('No file');
+  if (file.size > 6 * 1024 * 1024) throw new Error('Image is too large (max 6 MB)');
+  if (!file.type.startsWith('image/')) throw new Error('That is not an image');
+  await requireOwner(user.uid, campaignId);
+
+  const ext = (file.type.split('/')[1] || 'jpg').replace('jpeg', 'jpg').replace('+xml', '');
+  const path = `campaigns/${campaignId}/banner-${Date.now()}.${ext}`;
+  const bucket = getAdminStorage().bucket();
+  const fileRef = bucket.file(path);
+  const buf = Buffer.from(await file.arrayBuffer());
+  await fileRef.save(buf, { contentType: file.type, resumable: false });
+  await fileRef.makePublic();
+  const url = `https://storage.googleapis.com/${bucket.name}/${path}`;
+
+  // Delete old banner if any
+  const snap = await getAdminDb().collection('campaigns').doc(campaignId).get();
+  const oldPath = snap.data()?.bannerPath as string | undefined;
+  if (oldPath) {
+    try { await bucket.file(oldPath).delete(); } catch {}
+  }
+
+  await getAdminDb().collection('campaigns').doc(campaignId).update({
+    bannerUrl: url, bannerPath: path,
+  });
+  revalidatePath('/app', 'layout');
+  revalidatePath(`/app/campaigns/${campaignId}`, 'layout');
+}
+
+export async function removeCampaignBanner(formData: FormData) {
+  const user = await requireUser();
+  const campaignId = String(formData.get('campaign_id') ?? '');
+  if (!campaignId) throw new Error('Missing campaign');
+  await requireOwner(user.uid, campaignId);
+  const snap = await getAdminDb().collection('campaigns').doc(campaignId).get();
+  const oldPath = snap.data()?.bannerPath as string | undefined;
+  if (oldPath) {
+    try { await getAdminStorage().bucket().file(oldPath).delete(); } catch {}
+  }
+  await getAdminDb().collection('campaigns').doc(campaignId).update({
+    bannerUrl: null, bannerPath: null,
+  });
+  revalidatePath('/app', 'layout');
+  revalidatePath(`/app/campaigns/${campaignId}`, 'layout');
 }

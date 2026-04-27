@@ -3,6 +3,7 @@ import { getAdminDb } from '@/lib/firebase/admin';
 import { getCurrentUser } from '@/lib/firebase/server';
 import CampaignDetailsForm from '@/app/app/_components/campaign-details-form';
 import ColorPicker from '@/app/app/_components/color-picker';
+import BannerUpload from '@/app/app/_components/banner-upload';
 import DeleteCampaignDialog from '@/app/app/_components/delete-campaign-dialog';
 import LeaveCampaignButton from '@/app/app/_components/leave-campaign-button';
 
@@ -36,6 +37,16 @@ export default async function CampaignSettingsPage({ params }: Props) {
           system: (data.system as string | null) ?? null,
           venue: (data.venue as string | null) ?? null,
         }} />
+      </section>
+
+      <section className="border-t border-white/[0.06] pt-8">
+        <h2 className="text-lg font-semibold text-zinc-100 mb-1">Banner</h2>
+        <p className="text-sm text-zinc-500 mb-5">A wide image for the campaign hero and dashboard card.</p>
+        {isOwner ? (
+          <BannerUpload campaignId={id} currentUrl={(data.bannerUrl as string | null) ?? null} />
+        ) : (
+          <p className="text-sm text-zinc-500">Only the Game Master can change the banner.</p>
+        )}
       </section>
 
       <section className="border-t border-white/[0.06] pt-8">
