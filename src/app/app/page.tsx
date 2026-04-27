@@ -187,23 +187,30 @@ export default async function Dashboard() {
             <span className="text-xs text-zinc-600">{upNext.length} more</span>
           </div>
           <ul className="divide-y divide-white/[0.06] border-y border-white/[0.06]">
-            {upNext.map((s) => (
-              <li key={s.id} className="flex items-center gap-4 py-3.5">
-                <div className="w-12 shrink-0 text-center">
-                  <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium"><LocalDow iso={s.startsAt} /></p>
-                  <p className="text-lg font-semibold leading-none mt-0.5" style={{ color: colorByCampaign.get(s.campaignId) ?? '#f59e0b' }}><LocalDay iso={s.startsAt} /></p>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm text-zinc-100 truncate">
-                    <span className="font-medium">{s.campaignName}</span>
-                    {s.title && <span className="text-zinc-500"> · {s.title}</span>}
-                  </p>
-                  <p className="text-xs text-zinc-500 mt-0.5"><LocalTime iso={s.startsAt} />{s.venue && ` · ${s.venue}`}</p>
-                </div>
-                <span className="text-xs text-zinc-500 shrink-0">{s.rsvps.filter(r => r.status === 'yes').length} in</span>
-                <Link href={`/app/campaigns/${s.campaignId}`} className="text-xs text-zinc-500 hover:text-zinc-200 transition shrink-0">→</Link>
-              </li>
-            ))}
+            {upNext.map((s) => {
+              const myRsvp = s.rsvps.find((r) => r.uid === user.uid)?.status ?? null;
+              const color = colorByCampaign.get(s.campaignId) ?? '#f59e0b';
+              return (
+                <li key={s.id} className="flex items-center gap-3 py-1">
+                  <Link href={`/app/campaigns/${s.campaignId}`}
+                    className="flex items-center gap-4 flex-1 min-w-0 px-3 py-2.5 -mx-3 rounded-md hover:bg-white/[0.04] transition group">
+                    <div className="w-12 shrink-0 text-center">
+                      <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium"><LocalDow iso={s.startsAt} /></p>
+                      <p className="text-lg font-semibold leading-none mt-0.5" style={{ color }}><LocalDay iso={s.startsAt} /></p>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm text-zinc-100 truncate group-hover:text-white transition">
+                        <span className="font-medium">{s.campaignName}</span>
+                        {s.title && <span className="text-zinc-500"> · {s.title}</span>}
+                      </p>
+                      <p className="text-xs text-zinc-500 mt-0.5"><LocalTime iso={s.startsAt} />{s.venue && ` · ${s.venue}`}</p>
+                    </div>
+                    <span className="text-xs text-zinc-500 shrink-0">{s.rsvps.filter((r) => r.status === 'yes').length} in</span>
+                  </Link>
+                  <RsvpChip sessionId={s.id} campaignId={s.campaignId} current={myRsvp} />
+                </li>
+              );
+            })}
           </ul>
         </section>
       )}
