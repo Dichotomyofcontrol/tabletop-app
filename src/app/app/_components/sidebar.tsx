@@ -17,8 +17,15 @@ export default function Sidebar({ campaigns, displayName, email }: {
 }) {
   const path = usePathname() ?? '';
   const isDashboard = path === '/app';
-  const isInCampaign = (id: string) => path === `/app/campaigns/${id}` || path.startsWith(`/app/campaigns/${id}/`);
+  const isCharacters = path === '/app/characters' || path.startsWith('/app/characters/');
+  const isInCampaign = (id: string) =>
+    path === `/app/campaigns/${id}` || path.startsWith(`/app/campaigns/${id}/`);
   const isSettings = path.startsWith('/app/settings');
+
+  const navLink = (active: boolean) =>
+    `flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm transition ${
+      active ? 'bg-white/[0.07] text-zinc-50' : 'text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.04]'
+    }`;
 
   return (
     <aside className="w-[260px] shrink-0 border-r border-white/[0.06] bg-zinc-950/60 backdrop-blur-md flex flex-col h-screen sticky top-0">
@@ -33,15 +40,20 @@ export default function Sidebar({ campaigns, displayName, email }: {
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4">
-        <Link href="/app"
-          className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm transition ${
-            isDashboard ? 'bg-white/[0.07] text-zinc-50' : 'text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.04]'
-          }`}>
-          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" className="w-4 h-4 opacity-80">
-            <path d="M3 10 L10 3 L17 10 M5 9 V16 H8 V12 H12 V16 H15 V9" />
-          </svg>
-          Dashboard
-        </Link>
+        <div className="space-y-0.5">
+          <Link href="/app" className={navLink(isDashboard)}>
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" className="w-4 h-4 opacity-80">
+              <path d="M3 10 L10 3 L17 10 M5 9 V16 H8 V12 H12 V16 H15 V9" />
+            </svg>
+            Dashboard
+          </Link>
+          <Link href="/app/characters" className={navLink(isCharacters)}>
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" className="w-4 h-4 opacity-80">
+              <path d="M10 10 a3 3 0 1 0 0-6 a3 3 0 0 0 0 6 Z M4 17 c0-3 2.7-5 6-5 s6 2 6 5" />
+            </svg>
+            Characters
+          </Link>
+        </div>
 
         <div className="mt-7">
           <div className="flex items-center justify-between px-2.5 mb-1.5">
