@@ -493,6 +493,8 @@ export async function respondToPollGuest(formData: FormData) {
   const poll = pollSnap.data()!;
   if (poll.campaignId) throw new Error('Campaign polls require sign-in');
   if (poll.status !== 'open') throw new Error('This poll is closed');
+  const guestClosesAt = poll.closesAt as string | null | undefined;
+  if (guestClosesAt && new Date(guestClosesAt) < new Date()) throw new Error('Voting deadline has passed');
 
   const c = await cookies();
   let guestId = c.get('guestId')?.value;
@@ -523,4 +525,77 @@ export async function respondToPollGuest(formData: FormData) {
 
   revalidatePath(`/p/${pollId}`);
   revalidatePath(`/app/polls/${pollId}`);
+}
+
+// ---- Poll comments (works for both auth and guest) ----
+
+export async function addPollComment(formData: FormData) {
+  const pollId = String(formData.get('poll_id') ?? '');
+  const text = String(formData.get('text') ?? '').trim();
+  const guestName = String(formData.get('display_name') ?? '').trim();
+  if (!pollId || !text) return;
+  if (text.length > 2000) throw new Error('Comment is too long');
+
+  const db = getAdminDb();
+  const pollSnap = await db.collection('polls').doc(pollId).get();
+  if (!pollSnap.exists) throw new Error('Poll not found');
+  const poll = pollSnap.data()!;
+
+  const user = await getCurrentUser();
+  let uid: string;
+  let displayName: string;
+  let isGuest = false;
+
+  if (user) {
+    if (poll.campaignId) {
+      const camp = await db.collection('campaigns').doc(poll.campaignId as string).get();
+      const roles = (camp.data()?.roles ?? {}) as Record<string, string>;
+      if (!roles[user.uid]) throw new Error('Not a member of this campaign');
+    }
+    uid = user.uid;
+    const userSnap = await db.collection('users').doc(user.uid).get();
+    displayName = (userSnap.data()?.displayName as string | undefined) ?? user.email ?? 'Anon';
+  } else {
+    if (poll.campaignId) throw new Error('Sign in to comment on this poll');
+    if (!guestName) throw new Error('Please enter your name');
+    const c = await cookies();
+    let guestId = c.get('guestId')?.value;
+    if (!guestId) {
+      guestId = 'g_' + randomBytes(10).toString('hex');
+      c.set('guestId', guestId, { maxAge: 60 * 60 * 24 * 365, path: '/', sameSite: 'lax' });
+    }
+    uid = guestId;
+    displayName = guestName;
+    isGuest = true;
+  }
+
+  await db.collection('polls').doc(pollId).collection('comments').add({
+    uid, displayName, text, isGuest,
+    createdAt: new Date().toISOString(),
+  });
+
+  revalidatePath(`/app/polls/${pollId}`);
+  revalidatePath(`/p/${pollId}`);
+}
+
+export async function deletePollComment(formData: FormData) {
+  const user = await requireUser();
+  const pollId = String(formData.get('poll_id') ?? '');
+  const commentId = String(formData.get('comment_id') ?? '');
+  if (!pollId || !commentId) return;
+
+  const db = getAdminDb();
+  const pollSnap = await db.collection('polls').doc(pollId).get();
+  if (!pollSnap.exists) throw new Error('Poll not found');
+  const isHost = pollSnap.data()?.hostId === user.uid;
+
+  const ref = db.collection('polls').doc(pollId).collection('comments').doc(commentId);
+  const cSnap = await ref.get();
+  if (!cSnap.exists) return;
+  const isOwn = cSnap.data()?.uid === user.uid;
+  if (!isHost && !isOwn) throw new Error('Cannot delete that comment');
+
+  await ref.delete();
+  revalidatePath(`/app/polls/${pollId}`);
+  revalidatePath(`/p/${pollId}`);
 }
