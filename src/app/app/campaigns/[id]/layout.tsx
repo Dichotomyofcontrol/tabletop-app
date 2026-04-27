@@ -22,6 +22,11 @@ export default async function CampaignLayout({ params, children }: Props) {
   const isOwner = myRole === 'owner';
   const color = getCampaignColor(data.color as string | undefined);
   const bannerUrl = (data.bannerUrl as string | null) ?? null;
+  let gmName = (data.gmName as string | null) ?? null;
+  if (!gmName && data.ownerId) {
+    const ownerSnap = await getAdminDb().collection('users').doc(data.ownerId as string).get();
+    gmName = (ownerSnap.data()?.displayName as string | undefined) ?? null;
+  }
 
   return (
     <div>
@@ -45,9 +50,14 @@ export default async function CampaignLayout({ params, children }: Props) {
                 {data.venue && (
                   <span className="before:content-['·'] before:mr-3 before:text-zinc-700">{data.venue as string}</span>
                 )}
-                <span className="before:content-['·'] before:mr-3 before:text-zinc-700">
-                  You&apos;re the {roleLabel(myRole)}
-                </span>
+                {gmName && (
+                  <span className="before:content-['·'] before:mr-3 before:text-zinc-700">GM: {gmName}</span>
+                )}
+                {!isOwner && (
+                  <span className="before:content-['·'] before:mr-3 before:text-zinc-700">
+                    You&apos;re the {roleLabel(myRole)}
+                  </span>
+                )}
               </div>
             </div>
             {isOwner && (

@@ -39,9 +39,12 @@ export async function createCampaign(formData: FormData) {
   const system = String(formData.get('system') ?? '').trim() || null;
   const venue = String(formData.get('venue') ?? '').trim() || null;
   if (!name) return redirect('/app/campaigns/new?error=Name+is+required');
+  const userSnap = await getAdminDb().collection('users').doc(user.uid).get();
+  const ownerDisplayName = (userSnap.data()?.displayName as string | undefined) ?? null;
   const ref = getAdminDb().collection('campaigns').doc();
   await ref.set({
     name, description, system, venue,
+    gmName: ownerDisplayName,
     color: pickRandomColor(),
     ownerId: user.uid, memberIds: [user.uid],
     roles: { [user.uid]: 'owner' },
@@ -58,11 +61,12 @@ export async function updateCampaign(formData: FormData) {
   const description = String(formData.get('description') ?? '').trim() || null;
   const system = String(formData.get('system') ?? '').trim() || null;
   const venue = String(formData.get('venue') ?? '').trim() || null;
+  const gmName = String(formData.get('gm_name') ?? '').trim() || null;
   if (!campaignId || !name) throw new Error('Name is required');
   await requireEditor(user.uid, campaignId);
-  await getAdminDb().collection('campaigns').doc(campaignId).update({ name, description, system, venue });
-  revalidatePath(`/app/campaigns/${campaignId}`);
-  revalidatePath('/app');
+  await getAdminDb().collection('campaigns').doc(campaignId).update({ name, description, system, venue, gmName });
+  revalidatePath(`/app/campaigns/${campaignId}`, 'layout');
+  revalidatePath('/app', 'layout');
 }
 
 export async function updateCampaignColor(formData: FormData) {

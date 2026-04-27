@@ -46,6 +46,7 @@ export default async function CampaignSettingsPage({ params }: Props) {
         description: (data.description as string | null) ?? null,
         system: (data.system as string | null) ?? null,
         venue: (data.venue as string | null) ?? null,
+        gmName: (data.gmName as string | null) ?? null,
       }} />
 
       <SettingsCard title="Banner" description="A wide image for the campaign hero and dashboard card.">
