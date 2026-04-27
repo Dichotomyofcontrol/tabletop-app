@@ -243,3 +243,24 @@ select.input-mystic option:checked {
   background: rgba(245, 158, 11, 0.18);
   color: #fef3c7;
 }
+
+/* Native select styling — themed chevron + dark options menu */
+select.input-mystic, select.input {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23a1a1aa'%3E%3Cpath fill-rule='evenodd' d='M5.3 7.3a1 1 0 0 1 1.4 0L10 10.6l3.3-3.3a1 1 0 1 1 1.4 1.4l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 0 1 0-1.4z' clip-rule='evenodd'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.625rem center;
+  background-size: 1rem 1rem;
+  padding-right: 2.25rem;
+  cursor: pointer;
+}
+select.input-mystic option, select option {
+  background: #14141b;
+  color: #fafafa;
+}
+select.input-mystic option:checked {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fef3c7;
+}
