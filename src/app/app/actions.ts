@@ -476,3 +476,51 @@ export async function deleteSessionSeries(formData: FormData) {
   revalidatePath(`/app/campaigns/${campaignId}`, 'layout');
   revalidatePath('/app', 'layout');
 }
+
+// ---- Guest poll responses (public link) ----
+
+export async function respondToPollGuest(formData: FormData) {
+  const pollId = String(formData.get('poll_id') ?? '');
+  const optionId = String(formData.get('option_id') ?? '');
+  const status = String(formData.get('status') ?? '');
+  const displayName = String(formData.get('display_name') ?? '').trim();
+  if (!pollId || !optionId || !['yes', 'no', 'maybe'].includes(status)) return;
+  if (!displayName) throw new Error('Please enter your name');
+
+  const db = getAdminDb();
+  const pollSnap = await db.collection('polls').doc(pollId).get();
+  if (!pollSnap.exists) throw new Error('Poll not found');
+  const poll = pollSnap.data()!;
+  if (poll.campaignId) throw new Error('Campaign polls require sign-in');
+  if (poll.status !== 'open') throw new Error('This poll is closed');
+
+  const c = await cookies();
+  let guestId = c.get('guestId')?.value;
+  if (!guestId) {
+    guestId = 'g_' + randomBytes(10).toString('hex');
+    c.set('guestId', guestId, {
+      maxAge: 60 * 60 * 24 * 365,
+      path: '/', sameSite: 'lax',
+    });
+  }
+
+  const partRef = db.collection('polls').doc(pollId).collection('participants').doc(guestId);
+  const existing = await partRef.get();
+  const responses = (existing.data()?.responses ?? {}) as Record<string, string>;
+  responses[optionId] = status;
+
+  await partRef.set({
+    uid: guestId,
+    displayName,
+    isGuest: true,
+    responses,
+    respondedAt: new Date().toISOString(),
+  });
+
+  await db.collection('polls').doc(pollId).update({
+    memberIds: FieldValue.arrayUnion(guestId),
+  });
+
+  revalidatePath(`/p/${pollId}`);
+  revalidatePath(`/app/polls/${pollId}`);
+}
