@@ -27,15 +27,13 @@ export default async function CampaignLayout({ params, children }: Props) {
     <div>
       <div className="border-b border-white/[0.06] relative overflow-hidden" style={{ background: bannerUrl ? undefined : `linear-gradient(180deg, ${color.soft} 0%, transparent 60%)` }}>
         {bannerUrl && (
-          <>
-            <div className="absolute inset-0 -z-0">
-              <img src={bannerUrl} alt="" className="w-full h-full object-cover opacity-30" />
-            </div>
-            <div className="absolute inset-0 -z-0" style={{ background: `linear-gradient(180deg, rgba(11,11,15,0.5) 0%, rgba(11,11,15,0.85) 70%, rgba(11,11,15,1) 100%)` }} />
-          </>
+          <div className="absolute inset-0 z-0 pointer-events-none">
+            <img src={bannerUrl} alt="" className="w-full h-full object-cover opacity-40" />
+            <div className="absolute inset-0" style={{ background: `linear-gradient(180deg, rgba(11,11,15,0.55) 0%, rgba(11,11,15,0.88) 55%, rgba(11,11,15,0.98) 90%, rgba(11,11,15,1) 100%)` }} />
+          </div>
         )}
-        <span className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: color.hex }} />
-        <div className="max-w-[1100px] mx-auto px-8 pt-8">
+        <span className="absolute top-0 left-0 right-0 h-[2px] z-10" style={{ background: color.hex }} />
+        <div className="max-w-[1100px] mx-auto px-8 pt-8 relative z-10">
           <Link href="/app" className="text-xs text-zinc-500 hover:text-zinc-200 transition">
             ← Dashboard
           </Link>

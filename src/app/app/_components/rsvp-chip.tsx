@@ -54,7 +54,7 @@ export default function RsvpChip({ sessionId, campaignId, current }: {
         {label}
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1.5 z-30 w-44 card-mystic rounded-lg p-1.5 text-sm">
+        <div className="absolute right-0 top-full mt-1.5 z-50 w-44 card-mystic rounded-lg p-1.5 text-sm shadow-2xl">
           {(['yes','maybe','no'] as const).map((s) => (
             <button key={s} type="button" onClick={() => set(s)}
               className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-left hover:bg-amber-500/10 transition ${local === s ? 'text-amber-200' : 'text-zinc-300'}`}>

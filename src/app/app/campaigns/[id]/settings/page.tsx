@@ -11,10 +11,7 @@ type Props = { params: Promise<{ id: string }> };
 type Role = 'owner' | 'editor' | 'viewer';
 
 function SettingsCard({ title, description, children, danger }: {
-  title: string;
-  description?: string;
-  children: React.ReactNode;
-  danger?: boolean;
+  title: string; description?: string; children: React.ReactNode; danger?: boolean;
 }) {
   return (
     <section className={`rounded-lg border p-6 ${
@@ -44,14 +41,12 @@ export default async function CampaignSettingsPage({ params }: Props) {
 
   return (
     <div className="space-y-4 max-w-2xl">
-      <SettingsCard title="Campaign details" description={canEdit ? 'Anyone in the party can see these.' : 'Only the Game Master and Co-DMs can edit.'}>
-        <CampaignDetailsForm campaignId={id} canEdit={canEdit} initial={{
-          name: data.name as string,
-          description: (data.description as string | null) ?? null,
-          system: (data.system as string | null) ?? null,
-          venue: (data.venue as string | null) ?? null,
-        }} />
-      </SettingsCard>
+      <CampaignDetailsForm campaignId={id} canEdit={canEdit} initial={{
+        name: data.name as string,
+        description: (data.description as string | null) ?? null,
+        system: (data.system as string | null) ?? null,
+        venue: (data.venue as string | null) ?? null,
+      }} />
 
       <SettingsCard title="Banner" description="A wide image for the campaign hero and dashboard card.">
         {isOwner ? (

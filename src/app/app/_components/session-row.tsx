@@ -30,7 +30,7 @@ export default function SessionRow({ campaignId, session, myRsvp, partyRsvps, ca
   const c = color || '#f59e0b';
 
   return (
-    <li className="session-row card-mystic rounded-lg p-4 flex items-start gap-4 group color-bar overflow-hidden" style={{ ['--c' as string]: c }}>
+    <li className="session-row card-mystic rounded-lg p-4 flex items-start gap-4 group color-bar" style={{ ['--c' as string]: c }}>
       <div className="text-center min-w-[44px] pt-0.5">
         <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium">{dow(session.startsAt)}</p>
         <p className="text-2xl font-semibold leading-none mt-0.5" style={{ color: c }}>{day(session.startsAt)}</p>

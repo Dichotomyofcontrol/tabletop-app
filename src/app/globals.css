@@ -220,5 +220,5 @@ body > * { position: relative; z-index: 1; }
 .color-bar { position: relative; }
 .color-bar::before {
   content: ''; position: absolute; left: 0; top: 0; bottom: 0;
-  width: 3px; border-radius: 3px 0 0 3px; background: var(--c, transparent);
+  width: 3px; border-radius: 8px 0 0 8px; background: var(--c, transparent);
 }
