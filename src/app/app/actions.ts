@@ -6,6 +6,7 @@ import { randomBytes } from 'crypto';
 import { FieldValue } from 'firebase-admin/firestore';
 import { getAdminDb } from '@/lib/firebase/admin';
 import { getCurrentUser } from '@/lib/firebase/server';
+import { pickRandomColor } from '@/lib/campaign-colors';
 
 export type Role = 'owner' | 'editor' | 'viewer';
 
@@ -41,6 +42,7 @@ export async function createCampaign(formData: FormData) {
   const ref = getAdminDb().collection('campaigns').doc();
   await ref.set({
     name, description, system, venue,
+    color: pickRandomColor(),
     ownerId: user.uid, memberIds: [user.uid],
     roles: { [user.uid]: 'owner' },
     createdAt: new Date().toISOString(),
@@ -61,6 +63,17 @@ export async function updateCampaign(formData: FormData) {
   await getAdminDb().collection('campaigns').doc(campaignId).update({ name, description, system, venue });
   revalidatePath(`/app/campaigns/${campaignId}`);
   revalidatePath('/app');
+}
+
+export async function updateCampaignColor(formData: FormData) {
+  const user = await requireUser();
+  const campaignId = String(formData.get('campaign_id') ?? '');
+  const color = String(formData.get('color') ?? '').trim();
+  if (!campaignId || !color) throw new Error('Missing fields');
+  await requireEditor(user.uid, campaignId);
+  await getAdminDb().collection('campaigns').doc(campaignId).update({ color });
+  revalidatePath('/app', 'layout');
+  revalidatePath(`/app/campaigns/${campaignId}`, 'layout');
 }
 
 export async function deleteCampaign(formData: FormData) {

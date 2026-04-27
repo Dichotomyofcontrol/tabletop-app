@@ -4,6 +4,7 @@ import { getAdminDb } from '@/lib/firebase/admin';
 import { getCurrentUser } from '@/lib/firebase/server';
 import { roleLabel } from '@/lib/roles';
 import CampaignTabs from '@/app/app/_components/campaign-tabs';
+import { getCampaignColor } from '@/lib/campaign-colors';
 
 type Props = { params: Promise<{ id: string }>; children: React.ReactNode };
 type Role = 'owner' | 'editor' | 'viewer';
@@ -19,10 +20,12 @@ export default async function CampaignLayout({ params, children }: Props) {
   const myRole = roles[user.uid] ?? null;
   if (!myRole) return notFound();
   const isOwner = myRole === 'owner';
+  const color = getCampaignColor(data.color as string | undefined);
 
   return (
     <div>
-      <div className="border-b border-white/[0.06]">
+      <div className="border-b border-white/[0.06] relative" style={{ background: `linear-gradient(180deg, ${color.soft} 0%, transparent 60%)` }}>
+        <span className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: color.hex }} />
         <div className="max-w-[1100px] mx-auto px-8 pt-8">
           <Link href="/app" className="text-xs text-zinc-500 hover:text-zinc-200 transition">
             ← Dashboard

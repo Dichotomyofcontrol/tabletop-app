@@ -2,6 +2,7 @@ import { notFound, redirect } from 'next/navigation';
 import { getAdminDb } from '@/lib/firebase/admin';
 import { getCurrentUser } from '@/lib/firebase/server';
 import CampaignDetailsForm from '@/app/app/_components/campaign-details-form';
+import ColorPicker from '@/app/app/_components/color-picker';
 import DeleteCampaignDialog from '@/app/app/_components/delete-campaign-dialog';
 import LeaveCampaignButton from '@/app/app/_components/leave-campaign-button';
 
@@ -35,6 +36,16 @@ export default async function CampaignSettingsPage({ params }: Props) {
           system: (data.system as string | null) ?? null,
           venue: (data.venue as string | null) ?? null,
         }} />
+      </section>
+
+      <section className="border-t border-white/[0.06] pt-8">
+        <h2 className="text-lg font-semibold text-zinc-100 mb-1">Color</h2>
+        <p className="text-sm text-zinc-500 mb-5">Pick a hue. It marks this campaign in the sidebar, dashboard, and session list.</p>
+        {canEdit ? (
+          <ColorPicker campaignId={id} current={(data.color as string | undefined) ?? 'amber'} />
+        ) : (
+          <p className="text-sm text-zinc-500">Only the Game Master and Co-DMs can change the color.</p>
+        )}
       </section>
 
       <section className="border-t border-white/[0.06] pt-8">

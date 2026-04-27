@@ -12,15 +12,20 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const campaignsSnap = await getAdminDb().collection('campaigns')
     .where('memberIds', 'array-contains', user.uid).get();
   const campaigns = campaignsSnap.docs
-    .map((d) => ({ id: d.id, name: d.data().name as string, createdAt: (d.data().createdAt as string) ?? '' }))
+    .map((d) => ({
+      id: d.id,
+      name: d.data().name as string,
+      color: (d.data().color as string | undefined) ?? 'amber',
+      createdAt: (d.data().createdAt as string) ?? '',
+    }))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    .map(({ id, name }) => ({ id, name }));
+    .map(({ id, name, color }) => ({ id, name, color }));
 
   return (
     <ToastProvider>
       <div className="flex min-h-screen">
         <Sidebar campaigns={campaigns} displayName={displayName} email={user.email ?? ''} />
-        <main className="flex-1 min-w-0">{children}</main>
+        <main className="flex-1 min-w-0 page-fade">{children}</main>
       </div>
     </ToastProvider>
   );

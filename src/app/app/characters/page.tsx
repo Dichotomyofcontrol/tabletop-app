@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getAdminDb } from '@/lib/firebase/admin';
 import { getCurrentUser } from '@/lib/firebase/server';
+import { getCampaignColor } from '@/lib/campaign-colors';
 
 function initials(s: string) {
   return s.split(/\s+/).map((p) => p[0]).join('').slice(0, 2).toUpperCase();
@@ -11,6 +12,7 @@ type Character = {
   campaignId: string;
   campaignName: string;
   campaignSystem: string | null;
+  campaignColor: string;
   name: string;
   class: string | null;
   level: number | null;
@@ -34,6 +36,7 @@ export default async function CharactersPage() {
       campaignId: campDoc.id,
       campaignName: campDoc.data().name as string,
       campaignSystem: (campDoc.data().system as string | null) ?? null,
+      campaignColor: (campDoc.data().color as string | undefined) ?? 'amber',
       name: (d.data().name as string) ?? 'Unnamed',
       class: (d.data().class as string | null) ?? null,
       level: (d.data().level as number | null) ?? null,
@@ -73,7 +76,7 @@ export default async function CharactersPage() {
           {characters.map((c) => (
             <li key={`${c.campaignId}-${c.id}`}>
               <Link href={`/app/campaigns/${c.campaignId}/party`}
-                className="group block rounded-lg border border-white/[0.07] bg-zinc-900/40 p-5 hover:border-amber-500/30 transition h-full">
+                className="group block rounded-lg border border-white/[0.07] bg-zinc-900/40 p-5 hover:border-white/[0.14] transition h-full relative overflow-hidden color-bar" style={{ ['--c' as string]: getCampaignColor(c.campaignColor).hex }}>
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-amber-500/20 to-violet-500/15 border border-amber-500/30 flex items-center justify-center text-base font-semibold text-amber-100 shrink-0">
                     {initials(c.name)}

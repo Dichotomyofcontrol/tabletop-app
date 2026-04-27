@@ -3,17 +3,16 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import LogoutButton from './logout-button';
+import { getCampaignColor } from '@/lib/campaign-colors';
 
 function initials(s: string) {
   return s.split(/\s+/).map((p) => p[0]).join('').slice(0, 2).toUpperCase();
 }
 
-type Campaign = { id: string; name: string };
+type Campaign = { id: string; name: string; color: string };
 
 export default function Sidebar({ campaigns, displayName, email }: {
-  campaigns: Campaign[];
-  displayName: string;
-  email: string;
+  campaigns: Campaign[]; displayName: string; email: string;
 }) {
   const path = usePathname() ?? '';
   const isDashboard = path === '/app';
@@ -35,7 +34,7 @@ export default function Sidebar({ campaigns, displayName, email }: {
             <path d="M32 4 L58 22 L48 54 L16 54 L6 22 Z" />
             <path d="M32 4 L32 28 M58 22 L32 28 M6 22 L32 28 M48 54 L32 28 M16 54 L32 28" opacity="0.5" />
           </svg>
-          <span className="font-semibold text-zinc-100 text-sm tracking-tight">Tabletop</span>
+          <span className="font-semibold text-zinc-100 text-[15px] tracking-tight">Tabletop</span>
         </Link>
       </div>
 
@@ -63,19 +62,20 @@ export default function Sidebar({ campaigns, displayName, email }: {
           <div className="space-y-0.5">
             {campaigns.map((c) => {
               const active = isInCampaign(c.id);
+              const color = getCampaignColor(c.color);
               return (
                 <Link key={c.id} href={`/app/campaigns/${c.id}`}
                   className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm transition group ${
                     active ? 'bg-white/[0.07] text-zinc-50' : 'text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.04]'
                   }`}>
-                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${active ? 'bg-amber-400' : 'bg-zinc-600 group-hover:bg-zinc-400'}`} />
+                  <span className="w-2 h-2 rounded-full shrink-0 transition" style={{ background: color.hex, boxShadow: active ? `0 0 8px ${color.hex}` : 'none' }} />
                   <span className="truncate">{c.name}</span>
                 </Link>
               );
             })}
             <Link href="/app/campaigns/new"
-              className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm text-zinc-500 hover:text-amber-300 hover:bg-white/[0.04] transition">
-              <span className="w-1.5 h-1.5 rounded-full bg-zinc-700 shrink-0" />
+              className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.04] transition">
+              <span className="w-2 h-2 rounded-full bg-zinc-700 shrink-0" />
               New campaign
             </Link>
           </div>

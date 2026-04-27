@@ -207,3 +207,18 @@ body > * { position: relative; z-index: 1; }
 .icon-btn:hover { color: var(--text); background: rgba(255, 255, 255, 0.06); }
 .icon-btn-danger:hover { color: #fca5a5; background: rgba(220, 38, 38, 0.12); }
 .icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Page enter fade */
+.page-fade { animation: page-fade-in 0.22s cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes page-fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Card hover lift refinement */
+.card-mystic { transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s; }
+.card-mystic.lift:hover { transform: translateY(-2px); box-shadow: 0 14px 40px -16px rgba(0,0,0,0.6); }
+
+/* Colored left accent bar utility */
+.color-bar { position: relative; }
+.color-bar::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px; border-radius: 3px 0 0 3px; background: var(--c, transparent);
+}

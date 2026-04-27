@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { getAdminDb } from '@/lib/firebase/admin';
 import { getCurrentUser } from '@/lib/firebase/server';
 import RsvpChip from './_components/rsvp-chip';
+import { getCampaignColor } from '@/lib/campaign-colors';
 import { LocalTime, LocalFullDate, LocalDow, LocalDay } from './_components/local-time';
 
 function fmtDow(iso: string) { return new Date(iso).toLocaleDateString('en-US', { weekday: 'short' }); }
@@ -38,6 +39,7 @@ export default async function Dashboard() {
     system: (d.data().system as string | null) ?? null,
     venue: (d.data().venue as string | null) ?? null,
     memberIds: (d.data().memberIds as string[]) ?? [],
+    color: (d.data().color as string | undefined) ?? 'amber',
   }));
   const allMemberIds = Array.from(new Set(campaigns.flatMap((c) => c.memberIds)));
   const memberDocs = allMemberIds.length === 0 ? [] : await Promise.all(allMemberIds.map((uid) => db.collection('users').doc(uid).get()));
@@ -58,6 +60,7 @@ export default async function Dashboard() {
       };
     }));
   }));
+  const colorByCampaign = new Map(campaigns.map((c) => [c.id, getCampaignColor(c.color).hex]));
   const upcoming = sessLists.flat().sort((a, b) => a.startsAt.localeCompare(b.startsAt));
   const next: Sess | undefined = upcoming[0];
   const upNext = upcoming.slice(1, 6);
@@ -89,7 +92,8 @@ export default async function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-12">
           {/* Hero card — 2/3 */}
           <div className="lg:col-span-2">
-            <div className={`relative rounded-xl border bg-zinc-900/40 p-7 ${isUrgent ? 'border-amber-500/40' : 'border-white/[0.07]'}`}>
+            <div className={`relative rounded-xl border bg-zinc-900/40 p-7 overflow-hidden ${isUrgent ? 'border-amber-500/40' : 'border-white/[0.07]'}`}>
+              <span className="absolute left-0 top-0 bottom-0 w-1" style={{ background: colorByCampaign.get(next.campaignId) ?? '#f59e0b' }} />
               {isUrgent && (
                 <span className="absolute top-5 right-5 inline-flex items-center gap-1.5 text-[11px] text-amber-300">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
@@ -186,7 +190,7 @@ export default async function Dashboard() {
               <li key={s.id} className="flex items-center gap-4 py-3.5">
                 <div className="w-12 shrink-0 text-center">
                   <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium"><LocalDow iso={s.startsAt} /></p>
-                  <p className="text-lg font-semibold text-zinc-200 leading-none mt-0.5"><LocalDay iso={s.startsAt} /></p>
+                  <p className="text-lg font-semibold leading-none mt-0.5" style={{ color: colorByCampaign.get(s.campaignId) ?? '#f59e0b' }}><LocalDay iso={s.startsAt} /></p>
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm text-zinc-100 truncate">
@@ -210,7 +214,7 @@ export default async function Dashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {campaigns.map((c) => (
               <Link key={c.id} href={`/app/campaigns/${c.id}`}
-                className="group rounded-lg border border-white/[0.07] bg-zinc-900/40 p-5 hover:border-white/[0.14] transition">
+                className="group rounded-lg border border-white/[0.07] bg-zinc-900/40 p-5 hover:border-white/[0.14] transition relative overflow-hidden color-bar" style={{ ['--c' as string]: getCampaignColor(c.color).hex }}>
                 <h3 className="text-zinc-100 font-medium leading-tight group-hover:text-white transition">{c.name}</h3>
                 <p className="text-xs text-zinc-500 mt-1">
                   {[c.system, c.venue].filter(Boolean).join(' · ') || 'No details yet'}

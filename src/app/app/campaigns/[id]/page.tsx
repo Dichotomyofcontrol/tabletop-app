@@ -3,6 +3,7 @@ import { getAdminDb } from '@/lib/firebase/admin';
 import { getCurrentUser } from '@/lib/firebase/server';
 import AddSessionForm from '@/app/app/_components/add-session-form';
 import SessionRow from '@/app/app/_components/session-row';
+import { getCampaignColor } from '@/lib/campaign-colors';
 import { LocalShortDate } from '@/app/app/_components/local-time';
 
 type Props = { params: Promise<{ id: string }> };
@@ -20,6 +21,7 @@ export default async function SessionsPage({ params }: Props) {
   const myRole = roles[user.uid] ?? null;
   if (!myRole) return notFound();
   const canEdit = myRole === 'owner' || myRole === 'editor';
+  const colorHex = getCampaignColor(data.color as string | undefined).hex;
 
   const memberIds = Object.keys(roles);
   const memberDocs = await Promise.all(memberIds.map((mid) => db.collection('users').doc(mid).get()));
@@ -56,7 +58,7 @@ export default async function SessionsPage({ params }: Props) {
               const all = rsvpsBySession.get(s.id) ?? [];
               const my = all.find((r) => r.uid === user.uid)?.status ?? null;
               const partyRsvps = all.map((r) => ({ uid: r.uid, status: r.status, displayName: nameLookup.get(r.uid) ?? '?' }));
-              return <SessionRow key={s.id} campaignId={id} session={s} myRsvp={my} partyRsvps={partyRsvps} canEdit={canEdit} />;
+              return <SessionRow key={s.id} campaignId={id} session={s} myRsvp={my} partyRsvps={partyRsvps} canEdit={canEdit} color={colorHex} />;
             })}
           </ul>
         ) : (
