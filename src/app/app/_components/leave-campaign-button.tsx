@@ -19,22 +19,21 @@ export default function LeaveCampaignButton({ campaignId, campaignName }: {
   }
   if (!open) {
     return (
-      <button type="button" onClick={() => setOpen(true)}
-        className="text-sm text-zinc-500 hover:text-red-300 transition">
-        Leave the party
+      <button type="button" onClick={() => setOpen(true)} className="btn-danger">
+        Leave campaign
       </button>
     );
   }
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm">
       <div className="card-mystic rounded-xl p-6 max-w-sm w-full">
-        <h3 className="font-display text-xl text-amber-100">Leave the party?</h3>
+        <h3 className="text-xl font-semibold text-zinc-100">Leave this campaign?</h3>
         <p className="mt-2 text-sm text-zinc-400 leading-relaxed">
-          You&apos;ll lose access to <span className="text-amber-200">{campaignName}</span>. The Game Master can re-invite you.
+          You&apos;ll lose access to <span className="text-zinc-100">{campaignName}</span>. The Game Master can re-invite you.
         </p>
         <div className="flex gap-2 mt-5">
-          <button type="button" onClick={() => setOpen(false)} className="btn-ghost px-4 py-2 rounded-md text-sm uppercase tracking-wide flex-1">Stay</button>
-          <button type="button" disabled={pending} onClick={handleLeave} className="btn-danger px-4 py-2 rounded-md text-sm uppercase tracking-wide flex-1">
+          <button type="button" onClick={() => setOpen(false)} className="btn-ghost flex-1">Stay</button>
+          <button type="button" disabled={pending} onClick={handleLeave} className="btn-danger flex-1">
             {pending ? 'Leaving…' : 'Leave'}
           </button>
         </div>
