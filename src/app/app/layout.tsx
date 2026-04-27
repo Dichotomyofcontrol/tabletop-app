@@ -10,9 +10,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const displayName = (await getDisplayName(user.uid)) ?? user.email ?? 'You';
 
   const campaignsSnap = await getAdminDb().collection('campaigns')
-    .where('memberIds', 'array-contains', user.uid)
-    .orderBy('createdAt', 'desc').get();
-  const campaigns = campaignsSnap.docs.map((d) => ({ id: d.id, name: d.data().name as string }));
+    .where('memberIds', 'array-contains', user.uid).get();
+  const campaigns = campaignsSnap.docs
+    .map((d) => ({ id: d.id, name: d.data().name as string, createdAt: (d.data().createdAt as string) ?? '' }))
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .map(({ id, name }) => ({ id, name }));
 
   return (
     <ToastProvider>
