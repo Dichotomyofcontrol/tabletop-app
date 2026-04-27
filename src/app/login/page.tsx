@@ -43,37 +43,36 @@ function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="card-mystic w-full max-w-sm rounded-xl p-8">
-      <h1 className="font-display text-3xl gold-text mb-1">Welcome back</h1>
-      <p className="text-sm text-zinc-400 mb-6">The tavern remembers you.</p>
+    <form onSubmit={handleSubmit} className="card-mystic w-full max-w-sm rounded-xl p-7">
+      <h1 className="text-2xl font-semibold text-zinc-50 mb-1">Log in</h1>
+      <p className="text-sm text-zinc-500 mb-6">Welcome back.</p>
 
       {error && (
-        <p className="mb-4 px-3 py-2 rounded-md bg-red-950/50 border border-red-900/50 text-sm text-red-300">
+        <p className="mb-4 px-3 py-2 rounded-md bg-red-950/40 border border-red-900/40 text-sm text-red-300">
           {error}
         </p>
       )}
 
-      <label className="block mb-4">
-        <span className="text-xs uppercase tracking-widest text-amber-200/70">Email</span>
+      <label className="block mb-3.5">
+        <span className="text-xs text-zinc-400 font-medium">Email</span>
         <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
           className="input-mystic mt-1.5 w-full px-3 py-2.5 rounded-md" />
       </label>
 
-      <label className="block mb-6">
-        <span className="text-xs uppercase tracking-widest text-amber-200/70">Password</span>
+      <label className="block mb-5">
+        <span className="text-xs text-zinc-400 font-medium">Password</span>
         <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
           className="input-mystic mt-1.5 w-full px-3 py-2.5 rounded-md" />
       </label>
 
-      <button type="submit" disabled={busy}
-        className="btn-gold w-full px-4 py-2.5 rounded-md text-sm uppercase tracking-wide">
-        {busy ? 'Opening the gate…' : 'Enter'}
+      <button type="submit" disabled={busy} className="btn-gold w-full">
+        {busy ? 'Logging in…' : 'Log in'}
       </button>
 
-      <p className="mt-6 text-sm text-center text-zinc-400">
+      <p className="mt-5 text-sm text-center text-zinc-500">
         New here?{' '}
         <Link href="/signup" className="text-amber-300 hover:text-amber-200 underline-offset-2 hover:underline">
-          Sign up
+          Create an account
         </Link>
       </p>
     </form>
