@@ -8,6 +8,7 @@ import PollCommentForm from '@/app/app/_components/poll-comment-form';
 import CommentDeleteButton from '@/app/app/_components/comment-delete-button';
 import ShareButtons from '@/app/app/_components/share-buttons';
 import EditPollPanel from '@/app/app/_components/edit-poll-panel';
+import LiveRefresh from '@/app/app/_components/live-refresh';
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -112,6 +113,7 @@ export default async function AuthPollPage({ params }: Props) {
 
   return (
     <div className="max-w-3xl mx-auto px-8 py-10">
+      <LiveRefresh intervalMs={8000} />
       <Link href={isCampaignPoll ? `/app/campaigns/${data.campaignId}` : '/app/polls'}
         className="text-xs text-zinc-500 hover:text-zinc-200 transition">
         ← {isCampaignPoll ? 'Campaign' : 'Polls'}

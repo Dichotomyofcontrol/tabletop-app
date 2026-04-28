@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { getAdminDb } from '@/lib/firebase/admin';
 import { getCurrentUser } from '@/lib/firebase/server';
 import { deletePoll } from '@/app/app/actions';
+import LiveRefresh from '@/app/app/_components/live-refresh';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,6 +65,7 @@ export default async function OneShotsPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-8 py-10">
+      <LiveRefresh />
       <div className="flex items-baseline justify-between mb-2">
         <h1 className="text-3xl font-semibold text-zinc-50 tracking-tight">One-shots</h1>
         <Link href="/app/schedule" className="btn-gold text-sm">+ New one-shot</Link>

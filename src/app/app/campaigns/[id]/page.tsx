@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/firebase/server';
 import SessionRow from '@/app/app/_components/session-row';
 import { getCampaignColor } from '@/lib/campaign-colors';
 import { LocalShortDate } from '@/app/app/_components/local-time';
+import LiveRefresh from '@/app/app/_components/live-refresh';
 import { deleteSession } from '@/app/app/actions';
 
 type Props = { params: Promise<{ id: string }> };
@@ -60,6 +61,7 @@ export default async function SessionsPage({ params }: Props) {
 
   return (
     <div className="space-y-10">
+      <LiveRefresh />
       {canEdit && (
         <section className="rounded-xl border border-amber-500/20 bg-amber-500/[0.04] px-5 py-4 flex items-center gap-4 flex-wrap">
           <div className="flex-1 min-w-0">

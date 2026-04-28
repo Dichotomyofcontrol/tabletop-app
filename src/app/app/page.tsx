@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { getAdminDb } from '@/lib/firebase/admin';
 import { getCurrentUser } from '@/lib/firebase/server';
 import RsvpChip from './_components/rsvp-chip';
+import LiveRefresh from './_components/live-refresh';
 import { getCampaignColor } from '@/lib/campaign-colors';
 import { LocalTime, LocalFullDate, LocalDow, LocalDay } from './_components/local-time';
 
@@ -78,6 +79,7 @@ export default async function Dashboard() {
 
   return (
     <div className="max-w-[1100px] mx-auto px-8 py-10">
+      <LiveRefresh />
       {/* Page header */}
       <div className="mb-10">
         <h1 className="text-3xl font-semibold text-zinc-50 tracking-tight">Dashboard</h1>

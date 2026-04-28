@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import { getAdminDb } from '@/lib/firebase/admin';
 import { getCurrentUser } from '@/lib/firebase/server';
 import GuestForm from './guest-form';
+import LiveRefresh from '@/app/app/_components/live-refresh';
 import PollCommentForm from '@/app/app/_components/poll-comment-form';
 
 type Props = { params: Promise<{ id: string }> };
@@ -98,6 +99,7 @@ export default async function PublicPollPage({ params }: Props) {
 
   return (
     <main className="flex flex-1 justify-center px-6 py-10">
+      <LiveRefresh intervalMs={8000} />
       <div className="w-full max-w-2xl">
         <div className="flex items-center gap-2 mb-7">
           <svg viewBox="0 0 64 64" className="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" strokeWidth="2">

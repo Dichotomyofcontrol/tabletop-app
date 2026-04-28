@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { getAdminDb } from '@/lib/firebase/admin';
 import { getCurrentUser } from '@/lib/firebase/server';
 import { getCampaignColor } from '@/lib/campaign-colors';
+import LiveRefresh from '@/app/app/_components/live-refresh';
 
 export const dynamic = 'force-dynamic';
 
@@ -63,6 +64,7 @@ export default async function PollsInboxPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-8 py-10">
+      <LiveRefresh />
       <h1 className="text-3xl font-semibold text-zinc-50 tracking-tight mb-2">Polls</h1>
       <p className="text-sm text-zinc-500 mb-8">
         Open polls awaiting your vote — across all your campaigns and one-shots.
