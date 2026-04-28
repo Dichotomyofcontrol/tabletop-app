@@ -101,9 +101,13 @@ export default async function AuthPollPage({ params }: Props) {
     : null;
 
   const isCampaignPoll = !!data.campaignId;
-  const publicShareUrl = isCampaignPoll ? '' : `/p/${id}`;
-  const shareSubject = `Vote on a date: ${data.title as string}`;
-  const shareBody = `Pick a time for ${data.title as string}: ${publicShareUrl}`;
+  const publicShareUrl = `/p/${id}`;
+  const shareSubjectV2 = effectiveStatus === 'scheduled'
+    ? (isCampaignPoll ? `${data.title as string} — campaign session` : `You’re invited: ${data.title as string}`)
+    : (isCampaignPoll ? `Vote on a date: ${data.title as string}` : `Help pick a date: ${data.title as string}`);
+  const shareBodyV2 = effectiveStatus === 'scheduled'
+    ? `${data.title as string} is locked in${winning ? ` for ${fmt(winning.startsAt)}` : ''}. RSVP here: ${publicShareUrl}`
+    : `Help pick a date for ${data.title as string}: ${publicShareUrl}`;
 
   return (
     <div className="max-w-3xl mx-auto px-8 py-10">
@@ -135,19 +139,64 @@ export default async function AuthPollPage({ params }: Props) {
         </p>
       ) : null}
 
-      {!isCampaignPoll && effectiveStatus !== 'scheduled' && (
-        <div className="mt-6">
-          <ShareButtons url={publicShareUrl} subject={shareSubject} body={shareBody} />
-        </div>
-      )}
+      <div className="mt-6 flex items-center gap-3 flex-wrap">
+        <ShareButtons url={publicShareUrl} subject={shareSubjectV2} body={shareBodyV2} />
+        <span className="text-[11px] text-zinc-500">
+          {effectiveStatus === 'scheduled'
+            ? (isCampaignPoll
+                ? 'Anyone with this link can RSVP — campaign members sign in.'
+                : 'Anyone with this link can RSVP. No signup needed.')
+            : (isCampaignPoll
+                ? 'Drop this in your party’s chat. Members sign in to vote.'
+                : 'Anyone with this link can vote — no signup needed.')}
+        </span>
+      </div>
 
       {effectiveStatus === 'scheduled' && winning ? (
-        <div className="mt-8 rounded-lg border border-emerald-500/40 bg-emerald-500/[0.05] p-5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-300 mb-1">Locked in</p>
-          <p className="text-xl font-semibold text-zinc-50">{fmt(winning.startsAt)}</p>
-          {isCampaignPoll && (
-            <p className="text-xs text-zinc-400 mt-2">Added to the campaign calendar.</p>
-          )}
+        <div className="mt-8 space-y-4">
+          <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/[0.05] p-5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-300 mb-1">Locked in</p>
+            <p className="text-xl font-semibold text-zinc-50">{fmt(winning.startsAt)}</p>
+            {isCampaignPoll && (
+              <p className="text-xs text-zinc-400 mt-2">Added to the campaign calendar.</p>
+            )}
+          </div>
+          {(() => {
+            const yesC = participants.filter((p) => p.responses[winning.id] === 'yes').length;
+            const maybeC = participants.filter((p) => p.responses[winning.id] === 'maybe').length;
+            const noC = participants.filter((p) => p.responses[winning.id] === 'no').length;
+            const myR = (myPart?.responses[winning.id] ?? null) as 'yes' | 'no' | 'maybe' | null;
+            return (
+              <div className="rounded-lg border border-black/[0.10] dark:border-white/[0.07] bg-white dark:bg-zinc-900/40 p-5">
+                <div className="flex items-baseline justify-between flex-wrap gap-3 mb-3">
+                  <p className="text-sm font-semibold text-zinc-100">Will you be there?</p>
+                  <p className="text-xs">
+                    <span className="text-lime-300">{yesC} in</span>
+                    <span className="mx-2">·</span>
+                    <span className="text-amber-300">{maybeC} maybe</span>
+                    <span className="mx-2">·</span>
+                    <span className="text-zinc-500">{noC} out</span>
+                  </p>
+                </div>
+                <PollResponseButtons pollId={id} optionId={winning.id} my={myR} />
+                {participants.length > 0 && (
+                  <ul className="mt-4 pt-3 border-t border-black/[0.06] dark:border-white/[0.05] space-y-1.5">
+                    {participants.map((p) => {
+                      const r = p.responses[winning.id];
+                      const tone = r === 'yes' ? 'text-lime-300' : r === 'maybe' ? 'text-amber-300' : r === 'no' ? 'text-zinc-500' : 'text-zinc-600';
+                      const label = r === 'yes' ? 'In' : r === 'maybe' ? 'Maybe' : r === 'no' ? 'Out' : '—';
+                      return (
+                        <li key={p.uid} className="flex items-center justify-between text-xs">
+                          <span className="text-zinc-300">{p.displayName}{p.isGuest && <span className="ml-2 text-[10px] text-zinc-500 uppercase tracking-wider">Guest</span>}</span>
+                          <span className={tone}>{label}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            );
+          })()}
         </div>
       ) : (
         <div className="mt-8">

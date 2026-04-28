@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getAdminDb } from '@/lib/firebase/admin';
 import { getCurrentUser } from '@/lib/firebase/server';
+import { deletePoll } from '@/app/app/actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -87,12 +88,13 @@ export default async function OneShotsPage() {
               <ul className="space-y-2">
                 {upcoming.map((p) => {
                   const id = p.id as string;
-                  const s = statusOf(p);
+                  const st = statusOf(p);
+                  const isHost = (p.hostId as string) === user.uid;
                   return (
-                    <li key={id}>
+                    <li key={id} className="group relative">
                       <Link href={`/app/polls/${id}`}
                         className="block rounded-lg border border-black/[0.10] dark:border-white/[0.07] bg-white dark:bg-zinc-900/40 hover:bg-zinc-50 dark:hover:bg-zinc-900/60 transition px-5 py-4">
-                        <div className="flex items-baseline justify-between gap-3 flex-wrap">
+                        <div className="flex items-baseline justify-between gap-3 flex-wrap pr-12">
                           <div className="min-w-0 flex-1">
                             <p className="text-base font-semibold text-zinc-50 truncate">{p.title as string}</p>
                             <p className="text-xs text-zinc-500 mt-0.5">
@@ -100,11 +102,22 @@ export default async function OneShotsPage() {
                               {p.system ? ` · ${p.system as string}` : ''}
                             </p>
                           </div>
-                          <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded-md border ${tonePill(s.tone)}`}>
-                            {s.label}
+                          <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded-md border ${tonePill(st.tone)}`}>
+                            {st.label}
                           </span>
                         </div>
                       </Link>
+                      {isHost && (
+                        <form action={deletePoll}
+                          className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition">
+                          <input type="hidden" name="poll_id" value={id} />
+                          <button type="submit"
+                            className="text-[11px] px-2 py-1 rounded text-red-300 hover:text-red-200 hover:bg-red-950/30 transition"
+                            title="Delete one-shot">
+                            Delete
+                          </button>
+                        </form>
+                      )}
                     </li>
                   );
                 })}

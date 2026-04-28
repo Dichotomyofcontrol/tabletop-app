@@ -129,9 +129,23 @@ export default async function PublicPollPage({ params }: Props) {
         )}
 
         {effectiveStatus === 'scheduled' && winning ? (
-          <div className="mt-8 rounded-lg border border-emerald-500/40 bg-emerald-500/[0.05] p-5">
-            <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-emerald-300 mb-1">Locked in</p>
-            <p className="text-xl font-semibold text-zinc-50">{fmt(winning.startsAt)}</p>
+          <div className="mt-8 space-y-5">
+            <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/[0.05] p-5">
+              <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-emerald-300 mb-1">Locked in</p>
+              <p className="text-xl font-semibold text-zinc-50">{fmt(winning.startsAt)}</p>
+            </div>
+            <div>
+              <h2 className="text-xs uppercase tracking-[0.12em] text-zinc-500 font-semibold mb-3">
+                Will you be there? · {participants.length} responded
+              </h2>
+              <GuestForm
+                pollId={id}
+                options={[winning]}
+                initialName={myPart?.displayName ?? ''}
+                initialResponses={{ [winning.id]: myPart?.responses[winning.id] ?? null }}
+                tally={{ [winning.id]: tally[winning.id] ?? { yes: 0, maybe: 0, no: 0 } }}
+              />
+            </div>
           </div>
         ) : effectiveStatus === 'closed' ? (
           <div className="mt-8 rounded-lg border border-black/[0.10] dark:border-white/[0.07] bg-white dark:bg-zinc-900/40 p-5">

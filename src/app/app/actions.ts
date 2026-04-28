@@ -567,9 +567,12 @@ export async function respondToPoll(formData: FormData) {
   const pollSnap = await pollRef.get();
   if (!pollSnap.exists) throw new Error('Poll not found');
   const poll = pollSnap.data()!;
-  if (poll.status !== 'open') throw new Error('This poll is closed');
+  // Single-option scheduled polls are one-shot events — voting on them = RSVP, always allowed.
+  const optionsCount = ((poll.options as { id: string }[] | undefined) ?? []).length;
+  const isSingleScheduled = poll.status === 'scheduled' && optionsCount === 1;
+  if (poll.status !== 'open' && !isSingleScheduled) throw new Error('This poll is closed');
   const pollClosesAt = poll.closesAt as string | null | undefined;
-  if (pollClosesAt && new Date(pollClosesAt) < new Date()) throw new Error('Voting deadline has passed');
+  if (!isSingleScheduled && pollClosesAt && new Date(pollClosesAt) < new Date()) throw new Error('Voting deadline has passed');
 
   if (poll.campaignId) {
     const camp = await db.collection('campaigns').doc(poll.campaignId as string).get();
@@ -705,9 +708,12 @@ export async function respondToPollGuest(formData: FormData) {
   if (!pollSnap.exists) throw new Error('Poll not found');
   const poll = pollSnap.data()!;
   if (poll.campaignId) throw new Error('Campaign polls require sign-in');
-  if (poll.status !== 'open') throw new Error('This poll is closed');
+  // Single-option scheduled polls are one-shot events — guests can RSVP after lock-in.
+  const optionsCountG = ((poll.options as { id: string }[] | undefined) ?? []).length;
+  const isSingleScheduledG = poll.status === 'scheduled' && optionsCountG === 1;
+  if (poll.status !== 'open' && !isSingleScheduledG) throw new Error('This poll is closed');
   const guestClosesAt = poll.closesAt as string | null | undefined;
-  if (guestClosesAt && new Date(guestClosesAt) < new Date()) throw new Error('Voting deadline has passed');
+  if (!isSingleScheduledG && guestClosesAt && new Date(guestClosesAt) < new Date()) throw new Error('Voting deadline has passed');
 
   const c = await cookies();
   let guestId = c.get('guestId')?.value;
