@@ -141,10 +141,7 @@ export default function SessionsBrowser({ sessions }: { sessions: BrowserSession
       </div>
 
       {view === 'calendar' ? (
-        <div className="rounded-xl border border-dashed border-white/[0.08] p-12 text-center">
-          <p className="text-zinc-300">Calendar view is coming soon.</p>
-          <p className="text-sm text-zinc-500 mt-1">For now, browse by month in list view.</p>
-        </div>
+        <CalendarView sessions={sessions} />
       ) : groups.size === 0 ? (
         <div className="rounded-xl border border-dashed border-white/[0.08] p-12 text-center">
           <p className="text-zinc-300">
@@ -261,6 +258,154 @@ export default function SessionsBrowser({ sessions }: { sessions: BrowserSession
             </section>
           );
         })
+      )}
+    </div>
+  );
+}
+
+
+/* ─────────────── Calendar view ─────────────── */
+
+function ymd(d: Date) {
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+function CalendarView({ sessions }: { sessions: BrowserSession[] }) {
+  const today = new Date();
+  const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+
+  // Build 6x7 cells for the month grid
+  const firstOfMonth = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+  const startDow = firstOfMonth.getDay();
+  const daysInMonth = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0).getDate();
+  const cells: { date: Date; inMonth: boolean }[] = [];
+  for (let i = 0; i < startDow; i++) {
+    const d = new Date(cursor.getFullYear(), cursor.getMonth(), i - startDow + 1);
+    cells.push({ date: d, inMonth: false });
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    cells.push({ date: new Date(cursor.getFullYear(), cursor.getMonth(), d), inMonth: true });
+  }
+  while (cells.length < 42) {
+    const last = cells[cells.length - 1].date;
+    cells.push({ date: new Date(last.getFullYear(), last.getMonth(), last.getDate() + 1), inMonth: last.getMonth() === cursor.getMonth() ? false : false });
+  }
+
+  // Group sessions by YYYY-MM-DD
+  const byDay = new Map<string, BrowserSession[]>();
+  for (const s of sessions) {
+    const d = new Date(s.startsAt);
+    const key = ymd(d);
+    const arr = byDay.get(key) ?? [];
+    arr.push(s);
+    byDay.set(key, arr);
+  }
+  // Sort each day's sessions by time
+  for (const arr of byDay.values()) {
+    arr.sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  }
+
+  const todayKey = ymd(today);
+  const monthLabel = cursor.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const selectedSessions = selectedDay ? (byDay.get(selectedDay) ?? []) : [];
+
+  return (
+    <div>
+      {/* Month nav */}
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
+            className="w-8 h-8 rounded-md border border-white/[0.06] bg-zinc-900/60 text-zinc-300 hover:text-zinc-50 hover:border-white/[0.14] transition flex items-center justify-center"
+            title="Previous month">
+            <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="currentColor"><path d="M10 3 L5 8 L10 13 Z"/></svg>
+          </button>
+          <h3 className="text-lg font-semibold text-zinc-100">{monthLabel}</h3>
+          <button type="button" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
+            className="w-8 h-8 rounded-md border border-white/[0.06] bg-zinc-900/60 text-zinc-300 hover:text-zinc-50 hover:border-white/[0.14] transition flex items-center justify-center"
+            title="Next month">
+            <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="currentColor"><path d="M6 3 L11 8 L6 13 Z"/></svg>
+          </button>
+        </div>
+        <button type="button" onClick={() => { setCursor(new Date(today.getFullYear(), today.getMonth(), 1)); setSelectedDay(null); }}
+          className="px-3 py-1.5 rounded-lg bg-zinc-900/60 border border-white/[0.06] text-xs font-medium text-zinc-300 hover:text-zinc-50 transition">
+          Today
+        </button>
+      </div>
+
+      {/* Weekday header */}
+      <div className="grid grid-cols-7 gap-1 mb-1.5 text-[10px] uppercase tracking-wider text-zinc-500 text-center font-semibold">
+        {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d) => <div key={d} className="py-1">{d}</div>)}
+      </div>
+
+      {/* Calendar grid */}
+      <div className="grid grid-cols-7 gap-1">
+        {cells.map((cell, i) => {
+          const key = ymd(cell.date);
+          const todays = byDay.get(key) ?? [];
+          const isToday = key === todayKey;
+          const isSelected = key === selectedDay;
+          const visible = todays.slice(0, 3);
+          const overflow = todays.length - visible.length;
+          return (
+            <button type="button" key={i}
+              onClick={() => setSelectedDay(todays.length > 0 ? (isSelected ? null : key) : null)}
+              className={`min-h-[92px] rounded-lg border p-1.5 text-left transition ${
+                cell.inMonth
+                  ? 'border-white/[0.05] bg-zinc-900/30 hover:border-white/[0.12]'
+                  : 'border-transparent bg-zinc-950/30'
+              } ${isToday ? 'ring-1 ring-amber-500/50' : ''} ${isSelected ? 'ring-1 ring-amber-400/70' : ''} ${todays.length === 0 ? 'cursor-default' : 'cursor-pointer'}`}>
+              <div className={`text-xs flex items-center justify-between ${
+                cell.inMonth ? 'text-zinc-400' : 'text-zinc-700'
+              } ${isToday ? '!text-amber-300 font-bold' : ''}`}>
+                <span>{cell.date.getDate()}</span>
+                {todays.length > 0 && (
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: todays[0].campaignColor }} />
+                )}
+              </div>
+              <div className="space-y-0.5 mt-1">
+                {visible.map((s) => (
+                  <span key={s.id}
+                    className="block px-1.5 py-0.5 rounded text-[10px] truncate font-medium"
+                    style={{ background: `${s.campaignColor}22`, color: s.campaignColor, borderLeft: `2px solid ${s.campaignColor}` }}>
+                    {s.title || s.campaignName}
+                  </span>
+                ))}
+                {overflow > 0 && (
+                  <span className="block text-[10px] text-zinc-500 px-1.5 font-medium">+{overflow} more</span>
+                )}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Selected day detail */}
+      {selectedDay && selectedSessions.length > 0 && (
+        <div className="mt-5 rounded-lg border border-white/[0.07] bg-zinc-900/40 p-4">
+          <p className="text-[10px] uppercase tracking-[0.12em] text-zinc-500 font-semibold mb-3">
+            {new Date(selectedDay).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} · {selectedSessions.length} session{selectedSessions.length === 1 ? '' : 's'}
+          </p>
+          <ul className="space-y-2">
+            {selectedSessions.map((s) => (
+              <li key={s.id}>
+                <Link href={`/app/campaigns/${s.campaignId}`}
+                  className="flex items-center gap-3 rounded-md border border-white/[0.05] bg-zinc-900/60 hover:border-white/[0.14] transition px-3 py-2 group">
+                  <span className="w-1 self-stretch rounded-full" style={{ background: s.campaignColor }} />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-zinc-50 truncate group-hover:text-amber-200 transition">{s.title || s.campaignName}</p>
+                    <p className="text-xs text-zinc-500 mt-0.5 truncate">
+                      {s.title && <><span className="text-zinc-400">{s.campaignName}</span> · </>}
+                      {timeStr(s.startsAt)}
+                      {s.venue && ` · ${s.venue}`}
+                      {s.gmName && ` · GM: ${s.gmName}`}
+                    </p>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   );
