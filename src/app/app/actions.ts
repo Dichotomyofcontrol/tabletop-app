@@ -110,6 +110,26 @@ export async function deleteCampaign(formData: FormData) {
   redirect('/app');
 }
 
+/**
+ * Delete a user's RSVPs and characters in a campaign.
+ * Called when a member is removed or leaves so they don't show up as ghosts.
+ */
+async function cleanupMemberArtifacts(campaignId: string, memberUid: string) {
+  const db = getAdminDb();
+  const sessions = await db.collection('campaigns').doc(campaignId).collection('sessions').get();
+  const charSnap = await db.collection('campaigns').doc(campaignId).collection('characters')
+    .where('userId', '==', memberUid).get();
+  const batch = db.batch();
+  for (const sess of sessions.docs) {
+    const rsvpRef = sess.ref.collection('rsvps').doc(memberUid);
+    batch.delete(rsvpRef);
+  }
+  for (const ch of charSnap.docs) {
+    batch.delete(ch.ref);
+  }
+  await batch.commit();
+}
+
 export async function leaveCampaign(formData: FormData) {
   const user = await requireUser();
   const campaignId = String(formData.get('campaign_id') ?? '');
@@ -117,6 +137,7 @@ export async function leaveCampaign(formData: FormData) {
   const role = await getRole(user.uid, campaignId);
   if (!role) throw new Error('Not a member');
   if (role === 'owner') throw new Error('Game Masters cannot leave — delete the campaign instead');
+  await cleanupMemberArtifacts(campaignId, user.uid);
   await getAdminDb().collection('campaigns').doc(campaignId).update({
     memberIds: FieldValue.arrayRemove(user.uid),
     [`roles.${user.uid}`]: FieldValue.delete(),
@@ -147,11 +168,13 @@ export async function removeMember(formData: FormData) {
   if (!campaignId || !memberUid) throw new Error('Missing fields');
   await requireOwner(user.uid, campaignId);
   if (memberUid === user.uid) throw new Error('You cannot remove yourself');
+  await cleanupMemberArtifacts(campaignId, memberUid);
   await getAdminDb().collection('campaigns').doc(campaignId).update({
     memberIds: FieldValue.arrayRemove(memberUid),
     [`roles.${memberUid}`]: FieldValue.delete(),
   });
   revalidatePath(`/app/campaigns/${campaignId}`);
+  revalidatePath('/app');
 }
 
 // ---- Sessions ----

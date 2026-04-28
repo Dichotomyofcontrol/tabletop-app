@@ -53,12 +53,16 @@ export default async function Dashboard() {
       .where('startsAt', '>=', nowIso).orderBy('startsAt', 'asc').limit(3).get();
     return Promise.all(snap.docs.map(async (d) => {
       const rs = await db.collection('campaigns').doc(c.id).collection('sessions').doc(d.id).collection('rsvps').get();
+      const campMembers = new Set(c.memberIds);
       return {
         id: d.id, campaignId: c.id, campaignName: c.name,
         startsAt: d.data().startsAt as string,
         title: (d.data().title as string | null) ?? null,
         venue: (d.data().venue as string | null) ?? null,
-        rsvps: rs.docs.map((r) => ({ uid: r.id, status: r.data().status as 'yes' | 'no' | 'maybe' })),
+        // Only include RSVPs from people still in the campaign
+        rsvps: rs.docs
+          .filter((r) => campMembers.has(r.id))
+          .map((r) => ({ uid: r.id, status: r.data().status as 'yes' | 'no' | 'maybe' })),
       };
     }));
   }));

@@ -42,10 +42,15 @@ export default async function SessionsPage({ params }: Props) {
   const upcoming = sessions.filter((s) => s.startsAt >= now);
   const past = sessions.filter((s) => s.startsAt < now);
 
+  const memberSet = new Set(memberIds);
   const rsvpsBySession = new Map<string, { uid: string; status: 'yes' | 'no' | 'maybe' }[]>();
   await Promise.all(sessions.map(async (s) => {
     const r = await db.collection('campaigns').doc(id).collection('sessions').doc(s.id).collection('rsvps').get();
-    rsvpsBySession.set(s.id, r.docs.map((d) => ({ uid: d.id, status: d.data().status as 'yes' | 'no' | 'maybe' })));
+    // Only include RSVPs from people who are still in the campaign — filter out ex-member ghosts.
+    rsvpsBySession.set(s.id, r.docs
+      .filter((d) => memberSet.has(d.id))
+      .map((d) => ({ uid: d.id, status: d.data().status as 'yes' | 'no' | 'maybe' }))
+    );
   }));
 
   const pollsSnap = await db.collection('polls').where('campaignId', '==', id).where('status', '==', 'open').get();
