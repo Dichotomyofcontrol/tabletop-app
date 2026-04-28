@@ -86,11 +86,22 @@ export default async function Dashboard() {
             {next ? `Your next session is ${countdown(minutesUntil!)}.` : 'Nothing scheduled across your campaigns.'}
           </p>
         </div>
-        <Link href="/app/campaigns/new" className="btn-gold">New campaign</Link>
+        <div className="flex items-center gap-3">
+          <Link href="/app/campaigns/new" className="text-xs text-zinc-500 hover:text-zinc-200 transition whitespace-nowrap">
+            New campaign
+          </Link>
+          <Link href="/app/schedule" className="btn-gold inline-flex items-center gap-1.5 whitespace-nowrap">
+            <svg viewBox="0 0 20 20" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 4 V16 M4 10 H16"/></svg>
+            Schedule a session
+          </Link>
+        </div>
       </div>
 
       <section>
-        <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-500 mb-4">All campaigns</h2>
+        <div className="flex items-baseline justify-between mb-4">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-500">All campaigns</h2>
+          <Link href="/app/campaigns/new" className="text-xs text-amber-300 hover:text-amber-200 transition">+ New campaign</Link>
+        </div>
         {campaigns.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {campaigns.map((c) => (
