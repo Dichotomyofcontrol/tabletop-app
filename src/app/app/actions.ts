@@ -24,7 +24,7 @@ async function getRole(uid: string, campaignId: string): Promise<Role | null> {
 }
 async function requireOwner(uid: string, campaignId: string) {
   const role = await getRole(uid, campaignId);
-  if (role !== 'owner') throw new Error('Game Masters only');
+  if (role !== 'owner') throw new Error('Organizers only');
 }
 async function requireEditor(uid: string, campaignId: string) {
   const role = await getRole(uid, campaignId);
@@ -39,13 +39,13 @@ export async function createCampaign(formData: FormData) {
   const description = String(formData.get('description') ?? '').trim() || null;
   const system = String(formData.get('system') ?? '').trim() || null;
   const venue = String(formData.get('venue') ?? '').trim() || null;
+  const gmName = String(formData.get('gm_name') ?? '').trim() || null;
   if (!name) return redirect('/app/campaigns/new?error=Name+is+required');
-  const userSnap = await getAdminDb().collection('users').doc(user.uid).get();
-  const ownerDisplayName = (userSnap.data()?.displayName as string | undefined) ?? null;
+  if (!gmName) return redirect('/app/campaigns/new?error=Game+Master+name+is+required');
   const ref = getAdminDb().collection('campaigns').doc();
   await ref.set({
     name, description, system, venue,
-    gmName: ownerDisplayName,
+    gmName,
     color: pickRandomColor(),
     ownerId: user.uid, memberIds: [user.uid],
     roles: { [user.uid]: 'owner' },
@@ -136,7 +136,7 @@ export async function leaveCampaign(formData: FormData) {
   if (!campaignId) throw new Error('Missing campaign');
   const role = await getRole(user.uid, campaignId);
   if (!role) throw new Error('Not a member');
-  if (role === 'owner') throw new Error('Game Masters cannot leave — delete the campaign instead');
+  if (role === 'owner') throw new Error('The organizer cannot leave — delete the campaign instead');
   await cleanupMemberArtifacts(campaignId, user.uid);
   await getAdminDb().collection('campaigns').doc(campaignId).update({
     memberIds: FieldValue.arrayRemove(user.uid),

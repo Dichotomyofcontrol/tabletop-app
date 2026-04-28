@@ -60,11 +60,20 @@ export default async function CampaignLayout({ params, children }: Props) {
                 )}
               </div>
             </div>
-            {isOwner && (
-              <Link href={`/app/campaigns/${id}/invite`} className="btn-gold whitespace-nowrap">
-                Invite players
-              </Link>
-            )}
+            <div className="flex items-center gap-2 flex-wrap">
+              {(myRole === 'owner' || myRole === 'editor') && (
+                <Link href={`/app/schedule?campaign=${id}&lock=1`}
+                  className="btn-gold whitespace-nowrap inline-flex items-center gap-1.5">
+                  <svg viewBox="0 0 20 20" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 4 V16 M4 10 H16"/></svg>
+                  Schedule a session
+                </Link>
+              )}
+              {isOwner && (
+                <Link href={`/app/campaigns/${id}/invite`} className="btn-ghost text-sm whitespace-nowrap">
+                  Invite players
+                </Link>
+              )}
+            </div>
           </div>
           {data.description && (
             <p className="mt-5 text-zinc-400 leading-relaxed max-w-2xl">{data.description as string}</p>

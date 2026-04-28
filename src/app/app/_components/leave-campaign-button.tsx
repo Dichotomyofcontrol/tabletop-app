@@ -29,7 +29,7 @@ export default function LeaveCampaignButton({ campaignId, campaignName }: {
       <div className="card-mystic rounded-xl p-6 max-w-sm w-full">
         <h3 className="text-xl font-semibold text-zinc-100">Leave this campaign?</h3>
         <p className="mt-2 text-sm text-zinc-400 leading-relaxed">
-          You&apos;ll lose access to <span className="text-zinc-100">{campaignName}</span>. The Game Master can re-invite you.
+          You&apos;ll lose access to <span className="text-zinc-100">{campaignName}</span>. The organizer can re-invite you.
         </p>
         <div className="flex gap-2 mt-5">
           <button type="button" onClick={() => setOpen(false)} className="btn-ghost flex-1">Stay</button>

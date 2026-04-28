@@ -46,7 +46,7 @@ export default async function AcceptInvitePage({ params }: Props) {
         {used ? (
           <p className="mt-7 text-sm text-zinc-500">This invite has already been used.</p>
         ) : expired ? (
-          <p className="mt-7 text-sm text-red-400">This invite has expired. Ask the Game Master for a new one.</p>
+          <p className="mt-7 text-sm text-red-400">This invite has expired. Ask the organizer for a new one.</p>
         ) : (
           <form action={acceptInvite} className="mt-7">
             <input type="hidden" name="token" value={token} />

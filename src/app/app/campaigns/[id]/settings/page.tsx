@@ -53,7 +53,7 @@ export default async function CampaignSettingsPage({ params }: Props) {
         {isOwner ? (
           <BannerUpload campaignId={id} currentUrl={(data.bannerUrl as string | null) ?? null} />
         ) : (
-          <p className="text-sm text-zinc-500">Only the Game Master can change the banner.</p>
+          <p className="text-sm text-zinc-500">Only the organizer can change the banner.</p>
         )}
       </SettingsCard>
 
@@ -61,7 +61,7 @@ export default async function CampaignSettingsPage({ params }: Props) {
         {canEdit ? (
           <ColorPicker campaignId={id} current={(data.color as string | undefined) ?? 'amber'} />
         ) : (
-          <p className="text-sm text-zinc-500">Only the Game Master and Co-DMs can change the color.</p>
+          <p className="text-sm text-zinc-500">Only the organizer and editors can change the color.</p>
         )}
       </SettingsCard>
 
@@ -70,7 +70,7 @@ export default async function CampaignSettingsPage({ params }: Props) {
         danger
         description={isOwner
           ? 'Deleting a campaign is permanent. Sessions, characters, and pending invites will all be lost.'
-          : 'Leave at any time. The Game Master can re-invite you.'}>
+          : 'Leave at any time. The organizer can re-invite you.'}>
         {isOwner ? (
           <DeleteCampaignDialog campaignId={id} campaignName={data.name as string} />
         ) : (

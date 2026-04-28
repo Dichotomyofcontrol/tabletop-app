@@ -62,7 +62,7 @@ export default function CampaignDetailsForm({ campaignId, canEdit, initial }: Pr
         <div>
           <h2 className="text-base font-semibold text-zinc-100">Campaign details</h2>
           <p className="text-sm text-zinc-500 mt-1">
-            {canEdit ? 'Anyone in the party can see these.' : 'Only the Game Master and Co-DMs can edit.'}
+            {canEdit ? 'Anyone in the party can see these.' : 'Only the organizer and editors can edit.'}
           </p>
         </div>
         {canEdit && (
