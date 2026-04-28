@@ -71,7 +71,8 @@ export default async function PollsInboxPage() {
       {polls.length === 0 ? (
         <div className="rounded-xl border border-black/[0.10] dark:border-white/[0.07] bg-white dark:bg-zinc-900/40 p-10 text-center">
           <p className="text-zinc-300 font-medium">No open polls.</p>
-          <p className="text-sm text-zinc-500 mt-1.5">When someone schedules by vote, those polls show up here.</p>
+          <p className="text-sm text-zinc-500 mt-1.5 mb-5">When someone schedules by vote, those polls show up here.</p>
+          <Link href="/app/schedule?mode=poll" className="btn-gold inline-block">Start a poll</Link>
         </div>
       ) : (
         <ul className="space-y-2">

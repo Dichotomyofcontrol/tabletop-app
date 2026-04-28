@@ -215,7 +215,11 @@ export default async function Dashboard() {
       ) : (
         <div className="rounded-xl border border-dashed border-white/[0.08] p-16 text-center mb-12">
           <p className="text-zinc-300 text-lg">No sessions scheduled.</p>
-          <p className="text-sm text-zinc-500 mt-1">Open a campaign to schedule one.</p>
+          <p className="text-sm text-zinc-500 mt-1 mb-5">Lock in a date or let the party vote on options.</p>
+          <Link href="/app/schedule" className="btn-gold inline-flex items-center gap-1.5">
+            <svg viewBox="0 0 20 20" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 4 V16 M4 10 H16"/></svg>
+            Schedule a session
+          </Link>
         </div>
       )}
 

@@ -5,6 +5,7 @@ import { getAdminDb } from '@/lib/firebase/admin';
 import { getCurrentUser } from '@/lib/firebase/server';
 import { createInvite } from '@/app/app/actions';
 import RevokeInviteButton from '@/app/app/_components/revoke-invite-button';
+import CopyLinkButton from '@/app/app/_components/copy-link-button';
 import { ROLE_LABELS } from '@/lib/roles';
 
 type Props = {
@@ -95,9 +96,14 @@ export default async function InvitePage({ params, searchParams }: Props) {
                       {!used && !expired && <RevokeInviteButton token={inv.token} />}
                     </div>
                   </div>
-                  <code className="block mt-2.5 text-xs text-zinc-300 font-mono bg-zinc-950/60 rounded px-2.5 py-2 border border-white/[0.05] break-all">
-                    {url}
-                  </code>
+                  <div className="mt-2.5 flex items-start gap-2.5">
+                    <code className="flex-1 text-xs text-zinc-300 font-mono bg-zinc-950/60 rounded px-2.5 py-2 border border-white/[0.05] break-all">
+                      {url}
+                    </code>
+                    <div className="pt-1.5">
+                      <CopyLinkButton url={url} label="Copy" />
+                    </div>
+                  </div>
                 </li>
               );
             })}

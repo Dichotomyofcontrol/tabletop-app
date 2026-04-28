@@ -39,7 +39,7 @@ export default function RsvpChip({ sessionId, campaignId, current }: {
     });
   }
 
-  const label = local === 'yes' ? "You're in" : local === 'maybe' ? "Maybe" : local === 'no' ? "Out" : 'Will you make it?';
+  const label = local === 'yes' ? "You're in" : local === 'maybe' ? "Maybe" : local === 'no' ? "Not coming" : 'Will you make it?';
   const cls = local === 'yes' ? 'bg-lime-900/30 border-lime-700/50 text-lime-200'
             : local === 'maybe' ? 'bg-amber-900/30 border-amber-700/50 text-amber-200'
             : local === 'no' ? 'bg-zinc-900/50 border-zinc-700/50 text-zinc-400'
