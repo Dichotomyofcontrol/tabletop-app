@@ -12,14 +12,15 @@ function initials(s: string) {
 type Campaign = { id: string; name: string; color: string };
 type OneShot = { id: string; title: string; status: 'open' | 'scheduled'; scheduledAt: string | null };
 
-export default function Sidebar({ campaigns, oneShots, displayName, email }: {
-  campaigns: Campaign[]; oneShots: OneShot[]; displayName: string; email: string;
+export default function Sidebar({ campaigns, oneShots, openPollCount, displayName, email }: {
+  campaigns: Campaign[]; oneShots: OneShot[]; openPollCount: number; displayName: string; email: string;
 }) {
   const path = usePathname() ?? '';
   const isCharacters = path === '/app/characters' || path.startsWith('/app/characters/');
   const isInCampaign = (id: string) =>
     path === `/app/campaigns/${id}` || path.startsWith(`/app/campaigns/${id}/`);
   const isInOneShot = (id: string) => path === `/app/polls/${id}`;
+  const isPollsInbox = path === '/app/polls';
   const isOneShotsHub = path === '/app/one-shots';
   const isSettings = path.startsWith('/app/settings');
   const isSchedule = path === '/app/schedule';
@@ -41,8 +42,8 @@ export default function Sidebar({ campaigns, oneShots, displayName, email }: {
         </Link>
       </div>
 
-      {/* Primary action: Schedule a session */}
-      <div className="px-3 pt-4">
+      {/* Primary action + Polls inbox */}
+      <div className="px-3 pt-4 space-y-2">
         <Link href="/app/schedule"
           className={`flex items-center justify-center gap-2 w-full px-3 py-2.5 rounded-md text-sm font-semibold transition ${
             isSchedule
@@ -53,6 +54,21 @@ export default function Sidebar({ campaigns, oneShots, displayName, email }: {
             <path d="M10 4 V16 M4 10 H16" />
           </svg>
           Schedule a session
+        </Link>
+        <Link href="/app/polls"
+          className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm transition ${
+            isPollsInbox ? 'bg-white/[0.07] text-zinc-50' : 'text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.04]'
+          }`}>
+          <svg viewBox="0 0 20 20" className="w-4 h-4 opacity-80" fill="none" stroke="currentColor" strokeWidth="1.6">
+            <path d="M4 6 h12 M4 10 h8 M4 14 h12" />
+            <circle cx="15" cy="10" r="1.5" fill="currentColor" />
+          </svg>
+          <span className="flex-1">Polls</span>
+          {openPollCount > 0 && (
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-200 border border-amber-500/40">
+              {openPollCount}
+            </span>
+          )}
         </Link>
       </div>
 

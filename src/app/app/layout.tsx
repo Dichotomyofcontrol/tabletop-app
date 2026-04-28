@@ -53,6 +53,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     })
     .map(({ id, title, status, scheduledAt }) => ({ id, title, status, scheduledAt }));
 
+  // Count of all OPEN polls (campaign + one-shot) the user is in — for sidebar badge
+  const openPollCount = oneshotsSnap.docs.filter((d) => (d.data().status as string) === 'open').length;
+
   const c = await cookies();
   const sidebarOpen = c.get('sidebarOpen')?.value !== 'false';
 
@@ -60,7 +63,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <ToastProvider>
       <AppShell
         initialOpen={sidebarOpen}
-        sidebar={<Sidebar campaigns={campaigns} oneShots={oneShots} displayName={displayName} email={user.email ?? ''} />}
+        sidebar={<Sidebar campaigns={campaigns} oneShots={oneShots} openPollCount={openPollCount} displayName={displayName} email={user.email ?? ''} />}
       >
         {children}
       </AppShell>

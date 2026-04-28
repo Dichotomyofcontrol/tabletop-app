@@ -63,16 +63,12 @@ export default async function SessionsPage({ params }: Props) {
         <section className="rounded-xl border border-amber-500/20 bg-amber-500/[0.04] px-5 py-4 flex items-center gap-4 flex-wrap">
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-zinc-100">Plan the next session</p>
-            <p className="text-xs text-zinc-500 mt-0.5">Lock in a date or let the party vote.</p>
+            <p className="text-xs text-zinc-500 mt-0.5">Lock in a date — or pick poll mode in the form to let the party vote.</p>
           </div>
-          <div className="flex gap-2 flex-wrap">
-            <Link href={`/app/schedule?campaign=${id}&lock=1`} className="btn-gold text-sm whitespace-nowrap">
-              + Schedule a session
-            </Link>
-            <Link href={`/app/schedule?campaign=${id}&mode=poll&lock=1`} className="btn-ghost text-sm whitespace-nowrap">
-              Vote on dates
-            </Link>
-          </div>
+          <Link href={`/app/schedule?campaign=${id}&lock=1`} className="btn-gold text-sm whitespace-nowrap inline-flex items-center gap-1.5">
+            <svg viewBox="0 0 20 20" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 4 V16 M4 10 H16"/></svg>
+            Schedule a session
+          </Link>
         </section>
       )}
 

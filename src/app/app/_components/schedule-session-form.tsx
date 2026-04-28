@@ -144,27 +144,34 @@ export default function ScheduleSessionForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
 
-      {/* Campaign selector */}
-      <div>
-        <label className="block">
-          <span className="text-xs text-zinc-400 font-medium uppercase tracking-wide">Campaign</span>
-          <select
-            value={campaignId}
-            onChange={(e) => setCampaignId(e.target.value)}
-            disabled={lockCampaign}
-            className="input-mystic mt-1.5 w-full px-3 py-2.5 rounded-md disabled:opacity-70">
-            <option value="">One-shot — no campaign</option>
-            {userCampaigns.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-        </label>
-        <p className="text-[11px] text-zinc-500 mt-1.5">
-          {isOneShot
-            ? 'A standalone event. You\u2019ll get a public link to share with anyone.'
-            : `Adds to ${selectedCampaign?.name}\u2019s calendar.`}
-        </p>
-      </div>
+      {/* Campaign context */}
+      {lockCampaign && selectedCampaign ? (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/[0.04] px-4 py-3 flex items-center gap-3 flex-wrap">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-300 shrink-0">Scheduling for</span>
+          <span className="text-sm font-semibold text-zinc-100 truncate">{selectedCampaign.name}</span>
+          <span className="ml-auto text-[11px] text-zinc-500">Goes on this campaign\u2019s calendar.</span>
+        </div>
+      ) : (
+        <div>
+          <label className="block">
+            <span className="text-xs text-zinc-400 font-medium uppercase tracking-wide">Campaign</span>
+            <select
+              value={campaignId}
+              onChange={(e) => setCampaignId(e.target.value)}
+              className="input-mystic mt-1.5 w-full px-3 py-2.5 rounded-md">
+              <option value="">One-shot — no campaign</option>
+              {userCampaigns.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </label>
+          <p className="text-[11px] text-zinc-500 mt-1.5">
+            {isOneShot
+              ? 'A standalone event. You\u2019ll get a public link to share with anyone.'
+              : `Adds to ${selectedCampaign?.name ?? 'the campaign'}\u2019s calendar.`}
+          </p>
+        </div>
+      )}
 
       {/* Mode toggle */}
       <div>
