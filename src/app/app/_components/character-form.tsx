@@ -72,7 +72,7 @@ export default function CharacterForm({ campaignId, character }: { campaignId: s
           </label>
           <label className="block">
             <span className="text-xs uppercase tracking-widest text-amber-200/70">Level</span>
-            <input type="number" min={1} max={20} value={level} onChange={(e) => setLevel(e.target.value)}
+            <input type="number" min={0} max={99} value={level} onChange={(e) => setLevel(e.target.value)} placeholder="any"
               className="input-mystic mt-1.5 w-full px-3 py-2.5 rounded-md" />
           </label>
         </div>

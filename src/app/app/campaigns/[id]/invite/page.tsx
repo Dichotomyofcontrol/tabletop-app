@@ -56,9 +56,12 @@ export default async function InvitePage({ params, searchParams }: Props) {
           <input type="hidden" name="campaign_id" value={id} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <label className="block">
-              <span className="text-xs text-zinc-400 font-medium">Email (optional)</span>
+              <span className="text-xs text-zinc-400 font-medium">Note for yourself (optional)</span>
               <input type="email" name="email" placeholder="player@example.com"
                 className="input-mystic mt-1.5 w-full px-3 py-2.5 rounded-md" />
+              <span className="block mt-1 text-[10px] text-zinc-500">
+                Just a label so you remember who this link is for. We don’t auto-send.
+              </span>
             </label>
             <label className="block">
               <span className="text-xs text-zinc-400 font-medium">Role</span>

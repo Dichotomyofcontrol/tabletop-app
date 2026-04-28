@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { getClientAuth } from '@/lib/firebase/client';
+import { friendlyAuthError } from '@/lib/auth-errors';
 
 function SignupForm() {
   const router = useRouter();
@@ -39,7 +40,7 @@ function SignupForm() {
       router.refresh();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      setError(msg.replace(/^Firebase:\s*/, ''));
+      setError(friendlyAuthError(msg));
     } finally {
       setBusy(false);
     }

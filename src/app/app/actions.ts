@@ -666,6 +666,72 @@ export async function reopenPoll(formData: FormData) {
   revalidatePath('/app/polls');
 }
 
+export async function updatePoll(formData: FormData) {
+  const user = await requireUser();
+  const pollId = String(formData.get('poll_id') ?? '');
+  if (!pollId) return;
+
+  const db = getAdminDb();
+  const pollRef = db.collection('polls').doc(pollId);
+  const pollSnap = await pollRef.get();
+  if (!pollSnap.exists) throw new Error('Poll not found');
+  const poll = pollSnap.data()!;
+  if (poll.hostId !== user.uid) throw new Error('Only the host can edit this');
+
+  const title = String(formData.get('title') ?? '').trim();
+  if (!title) throw new Error('Title is required');
+  const description = String(formData.get('description') ?? '').trim() || null;
+  const venue = String(formData.get('venue') ?? '').trim() || null;
+  const system = String(formData.get('system') ?? '').trim() || null;
+  const duration = String(formData.get('duration') ?? '').trim() || null;
+  const closesAtRaw = String(formData.get('closes_at') ?? '').trim();
+  const closesAt = closesAtRaw ? new Date(closesAtRaw).toISOString() : null;
+  const newStartsAtRaw = String(formData.get('starts_at') ?? '').trim();
+
+  const updates: Record<string, unknown> = {
+    title, description, venue, system, duration, closesAt,
+  };
+
+  // For single-option scheduled polls, allow editing the locked-in date.
+  const opts = (poll.options as { id: string; startsAt: string }[]) ?? [];
+  const isSingleScheduled = poll.status === 'scheduled' && opts.length === 1;
+  if (isSingleScheduled && newStartsAtRaw) {
+    const newStartsAt = new Date(newStartsAtRaw).toISOString();
+    updates.options = [{ id: opts[0].id, startsAt: newStartsAt }];
+    // Sync the linked campaign session, if any
+    if (poll.campaignId) {
+      const sessSnap = await db
+        .collection('campaigns').doc(poll.campaignId as string)
+        .collection('sessions').where('pollId', '==', pollId).get();
+      const batch = db.batch();
+      sessSnap.docs.forEach((d) => {
+        batch.update(d.ref, { startsAt: newStartsAt, title, venue, notes: description });
+      });
+      await batch.commit();
+    }
+  } else if (poll.campaignId && (poll.status === 'scheduled' || poll.status === 'open')) {
+    // Also propagate title/venue/notes to any linked session for non-date edits on campaign polls
+    const sessSnap = await db
+      .collection('campaigns').doc(poll.campaignId as string)
+      .collection('sessions').where('pollId', '==', pollId).get();
+    const batch = db.batch();
+    sessSnap.docs.forEach((d) => {
+      batch.update(d.ref, { title, venue, notes: description });
+    });
+    await batch.commit();
+  }
+
+  await pollRef.update(updates);
+
+  if (poll.campaignId) {
+    revalidatePath(`/app/campaigns/${poll.campaignId}`, 'layout');
+  }
+  revalidatePath(`/app/polls/${pollId}`);
+  revalidatePath(`/p/${pollId}`);
+  revalidatePath('/app/polls');
+  revalidatePath('/app', 'layout');
+}
+
 export async function deletePoll(formData: FormData) {
   const user = await requireUser();
   const pollId = String(formData.get('poll_id') ?? '');

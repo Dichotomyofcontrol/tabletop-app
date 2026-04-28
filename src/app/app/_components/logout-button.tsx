@@ -7,6 +7,7 @@ import { getClientAuth } from '@/lib/firebase/client';
 export default function LogoutButton() {
   const router = useRouter();
   async function handleLogout() {
+    if (!confirm('Log out?')) return;
     try { await signOut(getClientAuth()); } catch {}
     await fetch('/api/auth/session', { method: 'DELETE' });
     router.replace('/');

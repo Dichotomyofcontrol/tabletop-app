@@ -7,6 +7,7 @@ import PollPickWinner from '@/app/app/_components/poll-pick-winner';
 import PollCommentForm from '@/app/app/_components/poll-comment-form';
 import CommentDeleteButton from '@/app/app/_components/comment-delete-button';
 import ShareButtons from '@/app/app/_components/share-buttons';
+import EditPollPanel from '@/app/app/_components/edit-poll-panel';
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -261,6 +262,22 @@ export default async function AuthPollPage({ params }: Props) {
           <p className="text-xs text-zinc-500 mt-2 text-center">
             The deadline passed but you can still lock in any date.
           </p>
+        </div>
+      )}
+
+      {isHost && (
+        <div className="mt-8 flex justify-end">
+          <EditPollPanel pollId={id} initial={{
+            title: data.title as string,
+            description: (data.description as string | null) ?? null,
+            venue: (data.venue as string | null) ?? null,
+            system: (data.system as string | null) ?? null,
+            duration: (data.duration as string | null) ?? null,
+            closesAt: (data.closesAt as string | null) ?? null,
+            isCampaignPoll,
+            isSingleScheduled: effectiveStatus === 'scheduled' && options.length === 1,
+            scheduledStartsAt: winning ? winning.startsAt : null,
+          }} />
         </div>
       )}
 

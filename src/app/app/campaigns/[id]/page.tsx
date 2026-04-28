@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/firebase/server';
 import SessionRow from '@/app/app/_components/session-row';
 import { getCampaignColor } from '@/lib/campaign-colors';
 import { LocalShortDate } from '@/app/app/_components/local-time';
+import { deleteSession } from '@/app/app/actions';
 
 type Props = { params: Promise<{ id: string }> };
 type Role = 'owner' | 'editor' | 'viewer';
@@ -121,10 +122,23 @@ export default async function SessionsPage({ params }: Props) {
               Past sessions ({past.length})
             </summary>
             <ul className="divide-y divide-white/[0.05] border-y border-white/[0.05]">
-              {past.slice().reverse().slice(0, 10).map((s) => (
-                <li key={s.id} className="flex items-center justify-between py-2.5 text-sm">
-                  <span className="text-zinc-300">{s.title || 'Session'}</span>
-                  <span className="text-zinc-500"><LocalShortDate iso={s.startsAt} /></span>
+              {past.slice().reverse().map((s) => (
+                <li key={s.id} className="group flex items-center justify-between py-2.5 text-sm">
+                  <span className="text-zinc-300 truncate">{s.title || 'Session'}</span>
+                  <span className="flex items-center gap-3 shrink-0">
+                    <span className="text-zinc-500"><LocalShortDate iso={s.startsAt} /></span>
+                    {canEdit && (
+                      <form action={deleteSession} className="opacity-0 group-hover:opacity-100 transition">
+                        <input type="hidden" name="campaign_id" value={id} />
+                        <input type="hidden" name="session_id" value={s.id} />
+                        <button type="submit"
+                          className="text-[11px] text-red-400 hover:text-red-300 transition px-1.5 py-0.5 rounded"
+                          title="Delete session">
+                          Delete
+                        </button>
+                      </form>
+                    )}
+                  </span>
                 </li>
               ))}
             </ul>
