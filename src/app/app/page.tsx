@@ -79,22 +79,11 @@ export default async function Dashboard() {
   return (
     <div className="max-w-[1100px] mx-auto px-8 py-10">
       {/* Page header */}
-      <div className="mb-10 flex items-baseline justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold text-zinc-50 tracking-tight">Dashboard</h1>
-          <p className="text-sm text-zinc-500 mt-1">
-            {next ? `Your next session is ${countdown(minutesUntil!)}.` : 'Nothing scheduled across your campaigns.'}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link href="/app/campaigns/new" className="text-xs text-zinc-500 hover:text-zinc-200 transition whitespace-nowrap">
-            New campaign
-          </Link>
-          <Link href="/app/schedule" className="btn-gold inline-flex items-center gap-1.5 whitespace-nowrap">
-            <svg viewBox="0 0 20 20" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 4 V16 M4 10 H16"/></svg>
-            Schedule a session
-          </Link>
-        </div>
+      <div className="mb-10">
+        <h1 className="text-3xl font-semibold text-zinc-50 tracking-tight">Dashboard</h1>
+        <p className="text-sm text-zinc-500 mt-1">
+          {next ? `Your next session is ${countdown(minutesUntil!)}.` : 'Nothing scheduled across your campaigns.'}
+        </p>
       </div>
 
       <section>
