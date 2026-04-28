@@ -492,12 +492,16 @@ export async function createPoll(formData: FormData) {
   const optionsRaw = formData.getAll('option').map(String).filter((s) => s.trim().length > 0);
 
   if (!title) throw new Error('Give the poll a title');
-  if (optionsRaw.length < 2) throw new Error('Add at least two date options');
+  if (optionsRaw.length < 1) throw new Error('Add at least one date option');
 
   const options = optionsRaw.map((iso) => ({
     id: 'o_' + randomBytes(6).toString('hex'),
     startsAt: new Date(iso).toISOString(),
   }));
+  // Single-option polls auto-lock — they're really one-shot events with a fixed date.
+  const isLockedSingle = options.length === 1;
+  const status: 'open' | 'scheduled' = isLockedSingle ? 'scheduled' : 'open';
+  const winnerOptionId = isLockedSingle ? options[0].id : null;
 
   if (campaignId) {
     await requireEditor(user.uid, campaignId);
@@ -519,15 +523,33 @@ export async function createPoll(formData: FormData) {
     duration,
     campaignId,
     options,
-    status: 'open',
-    winnerOptionId: null,
+    status,
+    winnerOptionId,
     closesAt,
     memberIds: [user.uid],
     createdAt: new Date().toISOString(),
   });
 
+  // For campaign + single-option polls, drop a real session on the campaign calendar.
+  if (campaignId && isLockedSingle) {
+    const sessionRef = db.collection('campaigns').doc(campaignId).collection('sessions').doc();
+    await sessionRef.set({
+      id: sessionRef.id,
+      campaignId,
+      startsAt: options[0].startsAt,
+      title: title ?? null,
+      venue: venue ?? null,
+      notes: description ?? null,
+      seriesId: null,
+      createdAt: new Date().toISOString(),
+      createdBy: user.uid,
+      pollId: ref.id,
+    });
+  }
+
   if (campaignId) {
     revalidatePath(`/app/campaigns/${campaignId}`, 'layout');
+    revalidatePath('/app', 'layout');
   }
   revalidatePath('/app/polls');
   redirect(`/app/polls/${ref.id}`);

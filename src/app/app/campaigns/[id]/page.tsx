@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { getAdminDb } from '@/lib/firebase/admin';
 import { getCurrentUser } from '@/lib/firebase/server';
-import AddSessionForm from '@/app/app/_components/add-session-form';
 import SessionRow from '@/app/app/_components/session-row';
 import { getCampaignColor } from '@/lib/campaign-colors';
 import { LocalShortDate } from '@/app/app/_components/local-time';
@@ -60,6 +59,23 @@ export default async function SessionsPage({ params }: Props) {
 
   return (
     <div className="space-y-10">
+      {canEdit && (
+        <section className="rounded-xl border border-amber-500/20 bg-amber-500/[0.04] px-5 py-4 flex items-center gap-4 flex-wrap">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-zinc-100">Plan the next session</p>
+            <p className="text-xs text-zinc-500 mt-0.5">Lock in a date or let the party vote.</p>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <Link href={`/app/schedule?campaign=${id}&lock=1`} className="btn-gold text-sm whitespace-nowrap">
+              + Schedule a session
+            </Link>
+            <Link href={`/app/schedule?campaign=${id}&mode=poll&lock=1`} className="btn-ghost text-sm whitespace-nowrap">
+              Vote on dates
+            </Link>
+          </div>
+        </section>
+      )}
+
       <section>
         <div className="flex items-baseline justify-between mb-4">
           <h2 className="text-lg font-semibold text-zinc-100">Upcoming</h2>
@@ -77,19 +93,7 @@ export default async function SessionsPage({ params }: Props) {
         ) : (
           <div className="rounded-lg border border-dashed border-white/[0.07] p-10 text-center">
             <p className="text-zinc-300">No sessions on the calendar.</p>
-            {canEdit && <p className="text-sm text-zinc-500 mt-1">Schedule the first one below.</p>}
-          </div>
-        )}
-        {canEdit && (
-          <div className="mt-5 space-y-3">
-            <AddSessionForm campaignId={id} defaultVenue={data.venue ?? undefined} />
-            <p className="text-xs text-zinc-500">
-              Or{' '}
-              <Link href={`/app/campaigns/${id}/polls/new`} className="text-amber-300 hover:text-amber-200 underline">
-                schedule by poll
-              </Link>{' '}
-              if the party hasn&apos;t agreed on a date.
-            </p>
+            {canEdit && <p className="text-sm text-zinc-500 mt-1">Use the Schedule button above to add one.</p>}
           </div>
         )}
       </section>

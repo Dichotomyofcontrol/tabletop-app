@@ -17,7 +17,8 @@ export default function Sidebar({ campaigns, displayName, email }: {
   const path = usePathname() ?? '';
   const isDashboard = path === '/app';
   const isCharacters = path === '/app/characters' || path.startsWith('/app/characters/');
-  const isPolls = path === '/app/polls' || path.startsWith('/app/polls/');
+  const isOneShots = path === '/app/one-shots' || path.startsWith('/app/one-shots/') || path === '/app/polls' || path.startsWith('/app/polls/');
+  const isSchedule = path === '/app/schedule';
   const isInCampaign = (id: string) =>
     path === `/app/campaigns/${id}` || path.startsWith(`/app/campaigns/${id}/`);
   const isSettings = path.startsWith('/app/settings');
@@ -39,6 +40,20 @@ export default function Sidebar({ campaigns, displayName, email }: {
         </Link>
       </div>
 
+      <div className="px-3 pt-4">
+        <Link href="/app/schedule"
+          className={`flex items-center justify-center gap-2 w-full px-3 py-2.5 rounded-md text-sm font-semibold transition ${
+            isSchedule
+              ? 'bg-amber-500 text-zinc-950'
+              : 'bg-amber-500/15 text-amber-200 border border-amber-500/40 hover:bg-amber-500/25'
+          }`}>
+          <svg viewBox="0 0 20 20" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <path d="M10 4 V16 M4 10 H16" />
+          </svg>
+          Schedule a session
+        </Link>
+      </div>
+
       <nav className="flex-1 overflow-y-auto px-3 py-4">
         <div className="space-y-0.5">
           <Link href="/app" className={navLink(isDashboard)}>
@@ -53,10 +68,10 @@ export default function Sidebar({ campaigns, displayName, email }: {
             </svg>
             Characters
           </Link>
-          <Link href="/app/polls" className={navLink(isPolls)}>
+          <Link href="/app/one-shots" className={navLink(isOneShots)}>
             <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" className="w-4 h-4 opacity-80">
-              <path d="M4 5 h12 M4 10 h8 M4 15 h12" />
-              <circle cx="15" cy="10" r="1.5" fill="currentColor" />
+              <circle cx="10" cy="10" r="6" />
+              <circle cx="10" cy="10" r="2" fill="currentColor" stroke="none" />
             </svg>
             One-shots
           </Link>
