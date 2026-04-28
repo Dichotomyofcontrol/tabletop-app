@@ -17,6 +17,7 @@ export default function Sidebar({ campaigns, displayName, email }: {
   const path = usePathname() ?? '';
   const isDashboard = path === '/app';
   const isCharacters = path === '/app/characters' || path.startsWith('/app/characters/');
+  const isPolls = path === '/app/polls' || path.startsWith('/app/polls/');
   const isInCampaign = (id: string) =>
     path === `/app/campaigns/${id}` || path.startsWith(`/app/campaigns/${id}/`);
   const isSettings = path.startsWith('/app/settings');
@@ -51,6 +52,13 @@ export default function Sidebar({ campaigns, displayName, email }: {
               <path d="M10 10 a3 3 0 1 0 0-6 a3 3 0 0 0 0 6 Z M4 17 c0-3 2.7-5 6-5 s6 2 6 5" />
             </svg>
             Characters
+          </Link>
+          <Link href="/app/polls" className={navLink(isPolls)}>
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" className="w-4 h-4 opacity-80">
+              <path d="M4 5 h12 M4 10 h8 M4 15 h12" />
+              <circle cx="15" cy="10" r="1.5" fill="currentColor" />
+            </svg>
+            One-shots
           </Link>
         </div>
 

@@ -477,6 +477,197 @@ export async function deleteSessionSeries(formData: FormData) {
   revalidatePath('/app', 'layout');
 }
 
+// ---- Polls (one-shot or campaign-scoped) ----
+
+export async function createPoll(formData: FormData) {
+  const user = await requireUser();
+  const title = String(formData.get('title') ?? '').trim();
+  const description = String(formData.get('description') ?? '').trim() || null;
+  const system = String(formData.get('system') ?? '').trim() || null;
+  const venue = String(formData.get('venue') ?? '').trim() || null;
+  const duration = String(formData.get('duration') ?? '').trim() || null;
+  const closesAtRaw = String(formData.get('closes_at') ?? '').trim();
+  const closesAt = closesAtRaw ? new Date(closesAtRaw).toISOString() : null;
+  const campaignId = String(formData.get('campaign_id') ?? '').trim() || null;
+  const optionsRaw = formData.getAll('option').map(String).filter((s) => s.trim().length > 0);
+
+  if (!title) throw new Error('Give the poll a title');
+  if (optionsRaw.length < 2) throw new Error('Add at least two date options');
+
+  const options = optionsRaw.map((iso) => ({
+    id: 'o_' + randomBytes(6).toString('hex'),
+    startsAt: new Date(iso).toISOString(),
+  }));
+
+  if (campaignId) {
+    await requireEditor(user.uid, campaignId);
+  }
+
+  const db = getAdminDb();
+  const userSnap = await db.collection('users').doc(user.uid).get();
+  const hostName = (userSnap.data()?.displayName as string | undefined) ?? user.email ?? 'Host';
+
+  const ref = db.collection('polls').doc();
+  await ref.set({
+    id: ref.id,
+    hostId: user.uid,
+    hostName,
+    title,
+    description,
+    system,
+    venue,
+    duration,
+    campaignId,
+    options,
+    status: 'open',
+    winnerOptionId: null,
+    closesAt,
+    memberIds: [user.uid],
+    createdAt: new Date().toISOString(),
+  });
+
+  if (campaignId) {
+    revalidatePath(`/app/campaigns/${campaignId}`, 'layout');
+  }
+  revalidatePath('/app/polls');
+  redirect(`/app/polls/${ref.id}`);
+}
+
+export async function respondToPoll(formData: FormData) {
+  const user = await requireUser();
+  const pollId = String(formData.get('poll_id') ?? '');
+  const optionId = String(formData.get('option_id') ?? '');
+  const status = String(formData.get('status') ?? '');
+  if (!pollId || !optionId || !['yes', 'no', 'maybe'].includes(status)) return;
+
+  const db = getAdminDb();
+  const pollRef = db.collection('polls').doc(pollId);
+  const pollSnap = await pollRef.get();
+  if (!pollSnap.exists) throw new Error('Poll not found');
+  const poll = pollSnap.data()!;
+  if (poll.status !== 'open') throw new Error('This poll is closed');
+  const pollClosesAt = poll.closesAt as string | null | undefined;
+  if (pollClosesAt && new Date(pollClosesAt) < new Date()) throw new Error('Voting deadline has passed');
+
+  if (poll.campaignId) {
+    const camp = await db.collection('campaigns').doc(poll.campaignId as string).get();
+    const roles = (camp.data()?.roles ?? {}) as Record<string, string>;
+    if (!roles[user.uid]) throw new Error('Not a member of this campaign');
+  }
+
+  const userSnap = await db.collection('users').doc(user.uid).get();
+  const displayName = (userSnap.data()?.displayName as string | undefined) ?? user.email ?? 'You';
+
+  const partRef = pollRef.collection('participants').doc(user.uid);
+  const existing = await partRef.get();
+  const responses = (existing.data()?.responses ?? {}) as Record<string, string>;
+  responses[optionId] = status;
+
+  await partRef.set({
+    uid: user.uid,
+    displayName,
+    isGuest: false,
+    responses,
+    respondedAt: new Date().toISOString(),
+  });
+  await pollRef.update({
+    memberIds: FieldValue.arrayUnion(user.uid),
+  });
+
+  revalidatePath(`/app/polls/${pollId}`);
+  revalidatePath(`/p/${pollId}`);
+}
+
+export async function pickPollWinner(formData: FormData) {
+  const user = await requireUser();
+  const pollId = String(formData.get('poll_id') ?? '');
+  const optionId = String(formData.get('option_id') ?? '');
+  if (!pollId || !optionId) return;
+
+  const db = getAdminDb();
+  const pollRef = db.collection('polls').doc(pollId);
+  const pollSnap = await pollRef.get();
+  if (!pollSnap.exists) throw new Error('Poll not found');
+  const poll = pollSnap.data()!;
+  if (poll.hostId !== user.uid) throw new Error('Only the host can pick a winner');
+
+  const opts = (poll.options as { id: string; startsAt: string }[]) ?? [];
+  const winning = opts.find((o) => o.id === optionId);
+  if (!winning) throw new Error('Unknown option');
+
+  await pollRef.update({
+    status: 'scheduled',
+    winnerOptionId: optionId,
+  });
+
+  // For campaign polls, drop a real session on the winning date.
+  if (poll.campaignId) {
+    const sessionRef = db.collection('campaigns').doc(poll.campaignId as string).collection('sessions').doc();
+    await sessionRef.set({
+      id: sessionRef.id,
+      campaignId: poll.campaignId,
+      startsAt: winning.startsAt,
+      title: poll.title ?? null,
+      venue: poll.venue ?? null,
+      notes: poll.description ?? null,
+      seriesId: null,
+      createdAt: new Date().toISOString(),
+      createdBy: user.uid,
+      pollId,
+    });
+    revalidatePath(`/app/campaigns/${poll.campaignId}`, 'layout');
+    revalidatePath('/app', 'layout');
+  }
+
+  revalidatePath(`/app/polls/${pollId}`);
+  revalidatePath(`/p/${pollId}`);
+  revalidatePath('/app/polls');
+}
+
+export async function reopenPoll(formData: FormData) {
+  const user = await requireUser();
+  const pollId = String(formData.get('poll_id') ?? '');
+  if (!pollId) return;
+
+  const db = getAdminDb();
+  const pollRef = db.collection('polls').doc(pollId);
+  const pollSnap = await pollRef.get();
+  if (!pollSnap.exists) throw new Error('Poll not found');
+  if (pollSnap.data()!.hostId !== user.uid) throw new Error('Only the host can reopen');
+
+  await pollRef.update({ status: 'open', winnerOptionId: null });
+  revalidatePath(`/app/polls/${pollId}`);
+  revalidatePath(`/p/${pollId}`);
+  revalidatePath('/app/polls');
+}
+
+export async function deletePoll(formData: FormData) {
+  const user = await requireUser();
+  const pollId = String(formData.get('poll_id') ?? '');
+  if (!pollId) return;
+
+  const db = getAdminDb();
+  const pollRef = db.collection('polls').doc(pollId);
+  const pollSnap = await pollRef.get();
+  if (!pollSnap.exists) return;
+  const poll = pollSnap.data()!;
+  if (poll.hostId !== user.uid) throw new Error('Only the host can delete this poll');
+
+  const parts = await pollRef.collection('participants').get();
+  const comments = await pollRef.collection('comments').get();
+  const batch = db.batch();
+  parts.docs.forEach((d) => batch.delete(d.ref));
+  comments.docs.forEach((d) => batch.delete(d.ref));
+  batch.delete(pollRef);
+  await batch.commit();
+
+  if (poll.campaignId) {
+    revalidatePath(`/app/campaigns/${poll.campaignId}`, 'layout');
+  }
+  revalidatePath('/app/polls');
+  redirect('/app/polls');
+}
+
 // ---- Guest poll responses (public link) ----
 
 export async function respondToPollGuest(formData: FormData) {

@@ -47,6 +47,17 @@ export default async function SessionsPage({ params }: Props) {
     rsvpsBySession.set(s.id, r.docs.map((d) => ({ uid: d.id, status: d.data().status as 'yes' | 'no' | 'maybe' })));
   }));
 
+  const pollsSnap = await db.collection('polls').where('campaignId', '==', id).where('status', '==', 'open').get();
+  const openPolls = pollsSnap.docs.map((d) => {
+    const data = d.data();
+    const opts = (data.options as { id: string; startsAt: string }[]) ?? [];
+    return {
+      id: d.id,
+      title: (data.title as string) ?? 'Poll',
+      optionsCount: opts.length,
+    };
+  });
+
   return (
     <div className="space-y-10">
       <section>
